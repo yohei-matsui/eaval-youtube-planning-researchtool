@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: eaval-youtube-planning-researchtool
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: "8000"

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube 企画リサーチツール</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink:    #e8457a;
+      --pink-l:  #fce8ef;
+      --pink-d:  #c23060;
+      --gray-bg: #f7f7f8;
+      --card-bg: #ffffff;
+      --border:  #e8e8ec;
+      --text:    #1a1a2e;
+      --muted:   #888899;
+      --red-yt:  #ff0000;
+      --shadow:  0 2px 12px rgba(0,0,0,.07);
+    }
+
+    body {
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background: var(--gray-bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo {
+      width: 32px; height: 32px;
+      background: var(--red-yt);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo svg { display: block; }
+    .header-text h1 { font-size: 1rem; font-weight: 700; line-height: 1.2; }
+    .header-text span { font-size: .75rem; color: var(--muted); }
+
+    /* ── Layout ── */
+    main { max-width: 860px; margin: 0 auto; padding: 36px 20px 60px; }
+
+    /* ── Hero description ── */
+    .hero {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow);
+    }
+    .hero p { font-size: .92rem; line-height: 1.8; color: #444; }
+
+    /* ── How-to steps ── */
+    .howto-label {
+      text-align: center;
+      font-size: .78rem;
+      color: var(--muted);
+      letter-spacing: .08em;
+      margin-bottom: 14px;
+    }
+    .steps {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin-bottom: 32px;
+    }
+    .step-wrap {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+    .step {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 14px 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .step-num {
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--pink);
+      margin-bottom: 6px;
+    }
+    .step-icon { font-size: 1.5rem; margin-bottom: 6px; }
+    .step-title { font-size: .82rem; font-weight: 700; margin-bottom: 4px; }
+    .step-desc { font-size: .72rem; color: var(--muted); line-height: 1.5; }
+    .step-arrow {
+      color: #ccc;
+      font-size: 1.1rem;
+      padding: 0 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── Step cards ── */
+    .step-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .step-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .step-badge {
+      width: 28px; height: 28px;
+      background: var(--pink);
+      color: #fff;
+      border-radius: 50%;
+      font-size: .8rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-card-header h2 { font-size: 1rem; font-weight: 700; }
+
+    /* ── Fields ── */
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .fields { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: .8rem; font-weight: 600; color: #555; }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrap input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 38px 10px 14px;
+      font-size: .92rem;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .input-wrap input:focus { border-color: var(--pink); }
+    .input-wrap input::placeholder { color: #bbb; }
+    .toggle-eye {
+      position: absolute; right: 12px;
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); padding: 0; line-height: 1;
+      font-size: 1rem;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 22px;
+      border-radius: 9px; border: none; cursor: pointer;
+      font-size: .92rem; font-weight: 700;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary {
+      background: linear-gradient(135deg, #f06292, var(--pink));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(232,69,122,.35);
+    }
+    .btn-primary:hover:not(:disabled) { opacity: .88; }
+    .btn-outline {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover:not(:disabled) { border-color: #bbb; }
+
+    /* ── Step 2 row ── */
+    .search-row {
+      display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+    }
+    .search-row .field { flex: 1; min-width: 200px; }
+
+    /* ── Loader ── */
+    .loader {
+      display: none; align-items: center; gap: 10px;
+      color: var(--muted); font-size: .85rem;
+      margin-top: 16px;
+    }
+    .loader.active { display: flex; }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid #eee;
+      border-top-color: var(--pink);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    .error-msg {
+      background: #fff0f3; border: 1px solid #fbb;
+      border-radius: 9px; padding: 12px 16px;
+      color: #c0392b; font-size: .87rem;
+      display: none; margin-top: 14px;
+    }
+    .error-msg.show { display: block; }
+
+    /* ── Volume banner ── */
+    .volume-banner {
+      display: none;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--pink);
+      border-radius: 12px;
+      padding: 18px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      gap: 32px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .volume-banner.show { display: flex; }
+    .vol-item span { font-size: .73rem; color: var(--muted); display: block; margin-bottom: 2px; }
+    .vol-item strong { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+    .vol-note { margin-left: auto; font-size: .75rem; color: var(--muted); }
+
+    /* ── Results ── */
+    .results-header {
+      display: none; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .results-header.show { display: flex; }
+    .results-header h3 { font-size: .95rem; font-weight: 700; }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+    thead { background: var(--gray-bg); }
+    th {
+      text-align: left; padding: 11px 14px;
+      font-size: .72rem; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td { padding: 13px 14px; border-bottom: 1px solid #f0f0f3; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .rank {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 7px;
+      font-size: .8rem; font-weight: 700;
+      background: #f0f0f3; color: var(--muted);
+    }
+    .rank.top3 { background: var(--pink-l); color: var(--pink); }
+
+    .title-text { font-weight: 600; line-height: 1.4; margin-bottom: 2px; }
+    .title-link { color: var(--text); text-decoration: none; font-weight: 600; }
+    .title-link:hover { color: var(--pink); text-decoration: underline; }
+    .channel-link { color: var(--muted); text-decoration: none; font-size: .8rem; }
+    .channel-link:hover { color: var(--pink); text-decoration: underline; }
+    .channel { font-size: .8rem; color: var(--muted); }
+
+    .badge {
+      display: inline-block;
+      background: var(--gray-bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-size: .8rem;
+      white-space: nowrap;
+    }
+
+    /* ── Volume judgment ── */
+    .vol-judge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 999px;
+      font-size: 1.1rem; font-weight: 800; letter-spacing: .04em;
+    }
+    .vol-judge.red    { background: #fff0f0; color: #e53935; border: 1.5px solid #ffcdd2; }
+    .vol-judge.yellow { background: #fffde7; color: #f9a825; border: 1.5px solid #fff59d; }
+    .vol-judge.green  { background: #f1f8e9; color: #388e3c; border: 1.5px solid #c5e1a5; }
+    .vol-judge-label  { font-size: .72rem; font-weight: 600; color: var(--muted); margin-left: 4px; }
+
+    /* ── Empty ── */
+    .empty { display: none; text-align: center; padding: 50px 20px; color: var(--muted); font-size: .9rem; }
+    .empty.show { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <svg width="18" height="13" viewBox="0 0 18 13" fill="none">
+      <polygon points="7,1 7,12 16,6.5" fill="white"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>YouTube 企画リサーチツール</h1>
+    <span>キーワード検索ボリューム &amp; YouTube上位動画を一括調査</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Description -->
+  <div class="hero">
+    <p>検索キーワードを入力するだけで、<strong>ラッコキーワードの月間検索ボリューム</strong>と<strong>YouTubeの上位10件</strong>（タイトル・チャンネル・再生回数・投稿日）を一括取得します。企画立案・競合分析にご活用ください。</p>
+  </div>
+
+  <!-- How-to -->
+  <p class="howto-label">使い方</p>
+  <div class="steps">
+    <div class="step-wrap">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-icon">🔑</div>
+        <div class="step-title">APIキー設定</div>
+        <div class="step-desc">ラッコキーワードの APIキーを入力</div>
+      </div>
+    </div>
+    <div class="step-arrow">›</div>
+    <div class="step-wrap">
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-icon">🔍</div>
+        <div class="step-title">キーワード入力</div>
+        <div class="step-desc">調べたいキーワードを入力してスタート</div>
+      </div>
+    </div>
+    <div class="step-arrow">›</div>
+    <div class="step-wrap">
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-icon">📊</div>
+        <div class="step-title">データ取得</div>
+        <div class="step-desc">検索ボリューム・上位動画を自動収集</div>
+      </div>
+    </div>
+    <div class="step-arrow">›</div>
+    <div class="step-wrap">
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-icon">💡</div>
+        <div class="step-title">企画に活かす</div>
+        <div class="step-desc">競合を把握してタイトル・構成を設計</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1: API Key -->
+  <div class="step-card">
+    <div class="step-card-header">
+      <div class="step-badge">1</div>
+      <h2>Step 1 — APIキー設定</h2>
+    </div>
+    <div class="fields">
+      <div class="field">
+        <label for="apiKey">ラッコキーワード APIキー</label>
+        <div class="input-wrap">
+          <input type="password" id="apiKey" placeholder="sk-xxxxxxxx" autocomplete="off" />
+          <button class="toggle-eye" onclick="toggleEye('apiKey', this)" title="表示/非表示" aria-label="パスワードを表示">
+            <svg id="eyeIcon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top:10px; font-size:.75rem; color:var(--muted);">🔒 キーはこのページ内のみで使用され、サーバーには保存されません。</p>
+  </div>
+
+  <!-- Step 2: Search -->
+  <div class="step-card">
+    <div class="step-card-header">
+      <div class="step-badge">2</div>
+      <h2>Step 2 — 調査するキーワードを入力</h2>
+    </div>
+    <div class="search-row">
+      <div class="field">
+        <label for="keyword">検索キーワード <span style="color:var(--pink)">*</span></label>
+        <div class="input-wrap">
+          <input type="text" id="keyword" placeholder="例: Python 入門、料理 レシピ" />
+        </div>
+      </div>
+      <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        キーワード分析スタート
+      </button>
+    </div>
+
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <span>YouTubeをスクレイピング中... しばらくお待ちください</span>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- Volume banner -->
+  <div class="volume-banner" id="volumeBanner">
+    <div class="vol-item">
+      <span>キーワード</span>
+      <strong id="volKeyword">—</strong>
+    </div>
+    <div class="vol-item">
+      <span>月間検索ボリューム</span>
+      <strong id="volMonthly">—</strong>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; margin-left:auto;">
+      <span class="vol-judge-label">判定</span>
+      <span id="volJudge" class="vol-judge" style="display:none;"></span>
+    </div>
+    <div class="vol-note" id="volNote"></div>
+  </div>
+
+  <!-- Results header -->
+  <div class="results-header" id="resultsHeader">
+    <h3 id="resultsTitle">検索結果</h3>
+    <button class="btn btn-outline" id="openBrowserBtn" onclick="openBrowser()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      YouTubeで確認する
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div id="tableWrap" style="display:none;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:52px;">順位</th>
+            <th>タイトル / チャンネル</th>
+            <th>再生回数</th>
+            <th>投稿日</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="empty" id="emptyState">検索結果が見つかりませんでした。別のキーワードをお試しください。</div>
+
+</main>
+
+<script>
+  let currentKeyword = "";
+
+  document.getElementById("keyword").addEventListener("keydown", e => {
+    if (e.key === "Enter") startSearch();
+  });
+
+  function toggleEye(id, btn) {
+    const inp = document.getElementById(id);
+    const isHidden = inp.type === "password";
+    inp.type = isHidden ? "text" : "password";
+    const svg = btn.querySelector("svg");
+    if (isHidden) {
+      // 表示中 → 目を閉じたアイコン
+      svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      // 非表示 → 目を開いたアイコン
+      svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  }
+
+  async function startSearch() {
+    const keyword = document.getElementById("keyword").value.trim();
+    const apiKey  = document.getElementById("apiKey").value.trim();
+    if (!keyword) { showError("キーワードを入力してください。"); return; }
+
+    currentKeyword = keyword;
+    setLoading(true);
+    hideResults();
+    hideError();
+
+    try {
+      const params = new URLSearchParams({ keyword, api_key: apiKey });
+      const res = await fetch(`/api/search?${params}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `サーバーエラー (${res.status})`);
+      }
+      renderResults(await res.json());
+    } catch (e) {
+      showError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderResults(data) {
+    document.getElementById("volKeyword").textContent = data.keyword || "—";
+    document.getElementById("volMonthly").textContent = data.volume?.monthly_volume ?? "—";
+    document.getElementById("volNote").textContent    = data.volume?.note ?? "";
+    document.getElementById("volumeBanner").classList.add("show");
+
+    // 判定バッジ
+    const num = data.volume?.monthly_volume_num ?? null;
+    const judgeEl = document.getElementById("volJudge");
+    if (num !== null) {
+      let cls, mark, label;
+      if (num < 1000)       { cls = "red";    mark = "△"; label = "ボリューム少"; }
+      else if (num < 3000)  { cls = "yellow"; mark = "○"; label = "ボリューム中"; }
+      else                  { cls = "green";  mark = "◎"; label = "ボリューム大"; }
+      judgeEl.className = `vol-judge ${cls}`;
+      judgeEl.textContent = mark;
+      judgeEl.title = label;
+      judgeEl.style.display = "inline-flex";
+    } else {
+      judgeEl.style.display = "none";
+    }
+
+    const videos = data.videos || [];
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+
+    if (!videos.length) {
+      document.getElementById("emptyState").classList.add("show");
+      return;
+    }
+
+    videos.forEach(v => {
+      const tr = document.createElement("tr");
+      const titleHtml = v.video_url
+        ? `<a href="${esc(v.video_url)}" target="_blank" rel="noopener" class="title-link">${esc(v.title)}</a>`
+        : esc(v.title);
+      const channelHtml = v.channel_url
+        ? `<a href="${esc(v.channel_url)}" target="_blank" rel="noopener" class="channel-link">${esc(v.channel)}</a>`
+        : esc(v.channel);
+      tr.innerHTML = `
+        <td><span class="${v.rank <= 3 ? 'rank top3' : 'rank'}">${v.rank}</span></td>
+        <td>
+          <div class="title-text">${titleHtml}</div>
+          <div class="channel">${channelHtml}</div>
+        </td>
+        <td><span class="badge">${esc(v.views)}</span></td>
+        <td style="color:var(--muted); white-space:nowrap; font-size:.83rem;">${esc(v.date)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("tableWrap").style.display = "block";
+    document.getElementById("resultsTitle").textContent = `検索結果 — 上位 ${videos.length} 件`;
+    document.getElementById("resultsHeader").classList.add("show");
+  }
+
+  async function openBrowser() {
+    if (!currentKeyword) return;
+    const btn = document.getElementById("openBrowserBtn");
+    btn.disabled = true;
+    try {
+      const res  = await fetch(`/api/open_browser?keyword=${encodeURIComponent(currentKeyword)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "エラー");
+      btn.textContent = "✓ 起動しました";
+      setTimeout(() => {
+        btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> YouTubeで確認する`;
+        btn.disabled = false;
+      }, 2500);
+    } catch (e) {
+      showError(e.message);
+      btn.disabled = false;
+    }
+  }
+
+  function setLoading(f) {
+    document.getElementById("searchBtn").disabled = f;
+    document.getElementById("loader").classList.toggle("active", f);
+  }
+  function hideResults() {
+    document.getElementById("volumeBanner").classList.remove("show");
+    document.getElementById("resultsHeader").classList.remove("show");
+    document.getElementById("tableWrap").style.display = "none";
+    document.getElementById("emptyState").classList.remove("show");
+  }
+  function showError(msg) {
+    const el = document.getElementById("errorMsg");
+    el.textContent = `エラー: ${msg}`;
+    el.classList.add("show");
+  }
+  function hideError() {
+    document.getElementById("errorMsg").classList.remove("show");
+  }
+  function esc(s) {
+    return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+</script>
+</body>
+</html>
