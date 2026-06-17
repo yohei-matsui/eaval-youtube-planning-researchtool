@@ -15,6 +15,8 @@ app = FastAPI()
 
 BASE_DIR = Path(__file__).parent
 
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
 
 @app.get("/", response_class=HTMLResponse)
 async def root():

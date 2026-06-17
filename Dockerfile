@@ -19,6 +19,7 @@ RUN playwright install chromium
 
 COPY app.py .
 COPY index.html .
+COPY static/ ./static/
 
 EXPOSE 8000
 
