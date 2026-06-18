@@ -263,6 +263,20 @@
       font-size: .79rem; white-space: nowrap;
     }
 
+    /* ── Date badge levels (blue) ── */
+    .date-1 { background: rgba(59,130,246,0.08); color: #1D4ED8; box-shadow: inset 0 1px 2px rgba(255,255,255,0.6); }
+    .date-2 { background: rgba(59,130,246,0.16); color: #1D4ED8; box-shadow: inset 0 1px 2px rgba(255,255,255,0.5); }
+    .date-3 { background: rgba(59,130,246,0.28); color: #1E40AF; box-shadow: inset 0 1px 2px rgba(255,255,255,0.4); }
+    .date-4 { background: rgba(59,130,246,0.44); color: #1E3A8A; color: #fff; box-shadow: inset 0 1px 2px rgba(255,255,255,0.3); }
+    .date-5 { background: rgba(30,58,138,0.80);  color: #fff;    box-shadow: inset 0 1px 2px rgba(255,255,255,0.2); }
+
+    /* ── Views badge levels (orange) ── */
+    .views-1 { background: rgba(251,146,60,0.08); color: #C2410C; box-shadow: inset 0 1px 2px rgba(255,255,255,0.6); }
+    .views-2 { background: rgba(251,146,60,0.18); color: #C2410C; box-shadow: inset 0 1px 2px rgba(255,255,255,0.5); }
+    .views-3 { background: rgba(251,146,60,0.32); color: #9A3412; box-shadow: inset 0 1px 2px rgba(255,255,255,0.4); }
+    .views-4 { background: rgba(251,146,60,0.55); color: #7C2D12; box-shadow: inset 0 1px 2px rgba(255,255,255,0.3); }
+    .views-5 { background: rgba(154,52,18,0.82);  color: #fff;    box-shadow: inset 0 1px 2px rgba(255,255,255,0.2); }
+
     .empty { display: none; text-align: center; padding: 50px 20px; color: var(--muted); font-size: .9rem; }
     .empty.show { display: block; }
     .note-text { margin-top: 10px; font-size: .73rem; color: var(--muted); }
@@ -490,8 +504,8 @@
       tr.innerHTML =
         '<td><span class="' + (v.rank <= 3 ? 'rank top3' : 'rank') + '">' + v.rank + '</span></td>' +
         '<td><div class="title-text">' + titleHtml + '</div><div>' + channelHtml + '</div></td>' +
-        '<td><span class="badge">' + esc(v.views) + '</span></td>' +
-        '<td style="color:var(--muted);white-space:nowrap;font-size:.82rem;">' + esc(v.date) + '</td>';
+        '<td><span class="badge ' + viewsLevelClass(v.views) + '">' + esc(v.views) + '</span></td>' +
+        '<td><span class="badge ' + dateLevelClass(v.date) + '" style="white-space:nowrap;font-size:.82rem;">' + esc(v.date) + '</span></td>';
       tbody.appendChild(tr);
     });
     document.getElementById("tableWrap").style.display = "block";
@@ -536,6 +550,45 @@
   function hideError() {
     document.getElementById("errorMsg").classList.remove("show");
   }
+  // 投稿日 → レベル (1=最近, 5=古い)
+  function dateLevelClass(dateStr) {
+    const s = dateStr || "";
+    // "n 秒前" "n 分前" "n 時間前" → level 1
+    if (/秒前|分前|時間前/.test(s)) return "date-1";
+    // "n 日前" で n<=7 → level 2
+    const dayM = s.match(/(\d+)\s*日前/);
+    if (dayM) return parseInt(dayM[1]) <= 7 ? "date-2" : "date-3";
+    // "n 週間前" → level 2
+    if (/週間前/.test(s)) return "date-2";
+    // "n ヶ月前" "n か月前" → level 3
+    if (/ヶ月前|か月前|ヵ月前/.test(s)) return "date-3";
+    // "n 年前" で n==1 → level 4, n>=2 → level 5
+    const yearM = s.match(/(\d+)\s*年前/);
+    if (yearM) return parseInt(yearM[1]) >= 2 ? "date-5" : "date-4";
+    // "yesterday" 系
+    if (/昨日|yesterday/i.test(s)) return "date-1";
+    return "date-3"; // 不明
+  }
+
+  // 再生回数 → レベル (1=多い, 5=少ない)
+  function viewsLevelClass(viewStr) {
+    const s = viewStr || "";
+    // 万単位パース: "12万回" → 120000
+    let num = 0;
+    const manM = s.match(/([\d,.]+)\s*万/);
+    const rawM = s.match(/([\d,]+)\s*回/);
+    if (manM) {
+      num = parseFloat(manM[1].replace(/,/g,"")) * 10000;
+    } else if (rawM) {
+      num = parseInt(rawM[1].replace(/,/g,""));
+    }
+    if (num >= 50000) return "views-1";
+    if (num >= 10000) return "views-2";
+    if (num >= 5000)  return "views-3";
+    if (num >= 1000)  return "views-4";
+    return "views-5";
+  }
+
   function esc(s) {
     return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
