@@ -56,7 +56,7 @@ async def fetch_rakko_volume(keyword: str, api_key: str) -> dict:
         "keyword": keyword,
         "monthly_volume": f"（モック）{mock_num:,}",
         "monthly_volume_num": mock_num,
-        "note": "ラッコキーワードAPIの仕様確定後、app.py の fetch_rakko_volume 関数を書き換えてください。",
+
     }
 
 

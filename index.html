@@ -471,7 +471,7 @@
   function renderResults(data) {
     document.getElementById("volKeyword").textContent = data.keyword || "—";
     document.getElementById("volMonthly").textContent = data.volume?.monthly_volume ?? "—";
-    document.getElementById("volNote").textContent    = data.volume?.note ?? "";
+    document.getElementById("volNote").textContent    = "";
     document.getElementById("volumeBanner").classList.add("show");
 
     const num = data.volume?.monthly_volume_num ?? null;
