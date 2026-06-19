@@ -598,7 +598,7 @@
 
 <!-- VidIQ fixed footer -->
 <div class="vidiq-footer">
-  <a id="vidiqBtn" href="https://app.vidiq.com/keyword-research" target="_blank" rel="noopener">
+  <a id="vidiqBtn" href="https://app.vidiq.com/research/search" target="_blank" rel="noopener">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
     VidIQで調べる
   </a>
@@ -722,7 +722,7 @@
     // VidIQ ボタンURL更新
     const vidiqBtn = document.getElementById("vidiqBtn");
     if (vidiqBtn) {
-      vidiqBtn.href = "https://app.vidiq.com/keyword-research?keyword=" + encodeURIComponent(data.keyword || "");
+      vidiqBtn.href = "https://app.vidiq.com/research/search?term=" + encodeURIComponent(data.keyword || "");
     }
     document.getElementById("resultsTitle").textContent = "検索結果 — 上位 " + videos.length + " 件";
     document.getElementById("resultsHeader").classList.add("show");
