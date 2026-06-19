@@ -278,6 +278,42 @@
     .views-4 { background: rgba(251,146,60,0.55); color: #7C2D12; box-shadow: inset 0 1px 2px rgba(255,255,255,0.3); }
     .views-5 { background: rgba(154,52,18,0.82);  color: #fff;    box-shadow: inset 0 1px 2px rgba(255,255,255,0.2); }
 
+    /* ── Suggest ── */
+    .suggest-wrap {
+      display: none;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-inset);
+      border-radius: var(--radius-outer);
+      padding: 20px 28px;
+      margin-bottom: 18px;
+    }
+    .suggest-wrap.show { display: block; }
+    .suggest-title {
+      font-size: .75rem; font-weight: 700;
+      color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .suggest-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .suggest-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(0,0,0,0.04);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      border-radius: 9999px;
+      padding: 5px 14px;
+      font-size: .82rem; color: var(--text);
+      cursor: pointer;
+      transition: background .15s, box-shadow .15s;
+      text-decoration: none;
+    }
+    .suggest-tag:hover {
+      background: rgba(230,57,70,0.10);
+      color: var(--pink);
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+    .suggest-tag svg { flex-shrink: 0; opacity: .45; }
+
     .empty { display: none; text-align: center; padding: 50px 20px; color: var(--muted); font-size: .9rem; }
     .empty.show { display: block; }
     .note-text { margin-top: 10px; font-size: .73rem; color: var(--muted); }
@@ -397,6 +433,12 @@
     <div class="vol-note" id="volNote"></div>
   </div>
 
+  <!-- Suggest -->
+  <div class="suggest-wrap" id="suggestWrap">
+    <div class="suggest-title">YouTubeサジェストキーワード</div>
+    <div class="suggest-tags" id="suggestTags"></div>
+  </div>
+
   <div class="results-header" id="resultsHeader">
     <h3 id="resultsTitle">検索結果</h3>
     <button class="btn btn-outline" id="openBrowserBtn" onclick="openBrowser()">
@@ -455,12 +497,16 @@
     hideError();
     try {
       const params = new URLSearchParams({ keyword, api_key: apiKey });
-      const res = await fetch("/api/search?" + params);
+      const [res, sugRes] = await Promise.all([
+        fetch("/api/search?" + params),
+        fetch("/api/suggest?keyword=" + encodeURIComponent(keyword))
+      ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || "サーバーエラー (" + res.status + ")");
       }
       renderResults(await res.json());
+      if (sugRes.ok) renderSuggests(await sugRes.json());
     } catch (e) {
       showError(e.message);
     } finally {
@@ -516,6 +562,24 @@
     document.getElementById("resultsHeader").classList.add("show");
   }
 
+  function renderSuggests(data) {
+    const tags = document.getElementById("suggestTags");
+    const wrap = document.getElementById("suggestWrap");
+    tags.innerHTML = "";
+    const sugs = (data.suggestions || []).filter(s => s && s !== data.keyword);
+    if (!sugs.length) return;
+    sugs.forEach(s => {
+      const a = document.createElement("a");
+      a.className = "suggest-tag";
+      a.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(s);
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.innerHTML = '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' + esc(s);
+      tags.appendChild(a);
+    });
+    wrap.classList.add("show");
+  }
+
   async function openBrowser() {
     if (!currentKeyword) return;
     const btn = document.getElementById("openBrowserBtn");
@@ -541,6 +605,7 @@
   }
   function hideResults() {
     document.getElementById("volumeBanner").classList.remove("show");
+    document.getElementById("suggestWrap").classList.remove("show");
     document.getElementById("resultsHeader").classList.remove("show");
     document.getElementById("tableWrap").style.display = "none";
     document.getElementById("emptyState").classList.remove("show");

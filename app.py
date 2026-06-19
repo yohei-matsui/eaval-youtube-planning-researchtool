@@ -151,6 +151,27 @@ async def api_search(
 
 
 # ---------------------------------------------------------------------------
+# /api/suggest
+# ---------------------------------------------------------------------------
+
+@app.get("/api/suggest")
+async def api_suggest(keyword: str = Query(..., description="検索キーワード")):
+    if not keyword.strip():
+        raise HTTPException(status_code=400, detail="keyword is required")
+    url = "http://suggestqueries.google.com/complete/search"
+    params = {"client": "firefox", "ds": "yt", "q": keyword}
+    try:
+        resp = requests.get(url, params=params, timeout=8,
+                            headers={"Accept-Language": "ja-JP,ja;q=0.9"})
+        resp.raise_for_status()
+        data = resp.json()
+        suggestions = data[1] if len(data) > 1 else []
+        return JSONResponse({"keyword": keyword, "suggestions": suggestions})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"サジェスト取得エラー: {e}")
+
+
+# ---------------------------------------------------------------------------
 # /api/open_browser
 # ---------------------------------------------------------------------------
 
