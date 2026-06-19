@@ -379,7 +379,7 @@
     .vidiq-header h3 { font-size: .95rem; font-weight: 700; }
     .vidiq-badge {
       font-size: .68rem; font-weight: 700; padding: 2px 9px;
-      border-radius: 9999px; background: rgba(99,102,241,0.12); color: #4338CA;
+      border-radius: 9999px; background: rgba(217,119,6,0.12); color: #B45309;
       box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);
     }
 
@@ -597,11 +597,11 @@
   <div class="empty" id="emptyState">検索結果が見つかりませんでした。別のキーワードをお試しください。</div>
 
   <!-- Rakko keywords -->
-  <!-- VidIQ -->
+  <!-- Claude AI -->
   <div class="vidiq-wrap" id="vidiqWrap">
     <div class="vidiq-header">
-      <h3>VidIQ キーワード分析</h3>
-      <span class="vidiq-badge">vidIQ</span>
+      <h3>AI キーワード分析</h3>
+      <span class="vidiq-badge">Claude AI</span>
     </div>
     <!-- スコアカード -->
     <div class="vidiq-scores" id="vidiqScores"></div>
@@ -678,7 +678,7 @@
         fetch("/api/search?" + params),
         fetch("/api/suggest?keyword=" + encodeURIComponent(keyword)),
         fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey)),
-        fetch("/api/vidiq_research?keyword=" + encodeURIComponent(keyword))
+        fetch("/api/claude_research?keyword=" + encodeURIComponent(keyword))
       ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

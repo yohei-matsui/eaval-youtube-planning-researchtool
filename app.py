@@ -211,8 +211,68 @@ async def api_rakko_keywords(
 
 
 # ---------------------------------------------------------------------------
-# /api/vidiq_research
+# /api/claude_research  (Claude AI によるキーワード分析)
 # ---------------------------------------------------------------------------
+
+@app.get("/api/claude_research")
+async def api_claude_research(keyword: str = Query(..., description="検索キーワード")):
+    if not keyword.strip():
+        raise HTTPException(status_code=400, detail="keyword is required")
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY が設定されていません")
+
+    import anthropic as _anthropic
+    client = _anthropic.Anthropic(api_key=api_key)
+
+    prompt = f"""あなたはYouTube SEOの専門家です。
+以下のキーワードについて、日本のYouTube市場を想定して分析し、必ず下記のJSON形式のみで回答してください。
+
+キーワード: 「{keyword}」
+
+返すJSONの形式:
+{{
+  "volume": <検索ボリュームスコア 0〜100 の数値>,
+  "competition": <競合スコア 0〜100 の数値>,
+  "estimatedMonthlySearch": <月間推定検索数 整数>,
+  "relatedKeywords": [
+    {{
+      "keyword": "<関連キーワード>",
+      "volume": <0〜100>,
+      "competition": <0〜100>,
+      "estimatedMonthlySearch": <整数>
+    }}
+  ]
+}}
+
+条件:
+- relatedKeywords は12件
+- volumeは「このキーワードがYouTubeでどれくらい検索されているか」の相対スコア
+- competitionは「このキーワードで動画を投稿しているチャンネルの多さ・強さ」
+- estimatedMonthlySearchは日本国内での月間YouTube検索数の推定値
+- JSON以外のテキストは一切含めないこと"""
+
+    message = client.messages.create(
+        model="claude-opus-4-5",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    import json as _json
+    raw = message.content[0].text.strip()
+    # コードブロックがあれば除去
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    data = _json.loads(raw.strip())
+    data["keyword"] = keyword
+    return JSONResponse({"keyword": keyword, "seedKeyword": data, "relatedKeywords": data.get("relatedKeywords", [])})
+
+
+# ---------------------------------------------------------------------------
+# /api/vidiq_research
 
 @app.get("/api/vidiq_research")
 async def api_vidiq_research(keyword: str = Query(..., description="検索キーワード")):
