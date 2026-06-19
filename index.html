@@ -314,6 +314,63 @@
     }
     .suggest-tag svg { flex-shrink: 0; opacity: .45; }
 
+    /* ── Rakko keywords table ── */
+    .rakko-wrap {
+      display: none;
+      margin-top: 24px;
+    }
+    .rakko-wrap.show { display: block; }
+    .rakko-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .rakko-header h3 { font-size: .95rem; font-weight: 700; }
+    .rakko-header span { font-size: .72rem; color: var(--muted); }
+    .rakko-table-wrap {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-inset);
+      border-radius: var(--radius-outer);
+      overflow: hidden;
+    }
+    .rakko-table-wrap table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+    .rakko-table-wrap thead { background: rgba(0,0,0,0.03); }
+    .rakko-table-wrap th {
+      text-align: left; padding: 11px 16px;
+      font-size: .7rem; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--muted);
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.06);
+      white-space: nowrap;
+    }
+    .rakko-table-wrap td {
+      padding: 12px 16px;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04);
+      vertical-align: middle;
+    }
+    .rakko-table-wrap tr:last-child td { box-shadow: none; }
+    .rakko-table-wrap tr:hover td { background: rgba(255,255,255,0.40); }
+
+    .seo-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .seo-bar {
+      flex: 1; height: 6px; border-radius: 9999px;
+      background: rgba(0,0,0,0.07);
+      overflow: hidden; max-width: 80px;
+    }
+    .seo-bar-fill { height: 100%; border-radius: 9999px; }
+    .seo-val { font-size: .82rem; color: var(--muted); white-space: nowrap; }
+
+    .swap-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(0,0,0,0.04);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      border: none; cursor: pointer; color: var(--muted);
+      transition: background .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .swap-btn:hover { background: rgba(230,57,70,0.12); color: var(--pink); }
+
     .empty { display: none; text-align: center; padding: 50px 20px; color: var(--muted); font-size: .9rem; }
     .empty.show { display: block; }
     .note-text { margin-top: 10px; font-size: .73rem; color: var(--muted); }
@@ -468,6 +525,27 @@
 
   <div class="empty" id="emptyState">検索結果が見つかりませんでした。別のキーワードをお試しください。</div>
 
+  <!-- Rakko keywords -->
+  <div class="rakko-wrap" id="rakkoWrap">
+    <div class="rakko-header">
+      <h3>ラッコキーワード 関連キーワード</h3>
+      <span>上位 10 件</span>
+    </div>
+    <div class="rakko-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>キーワード</th>
+            <th>SEO難易度</th>
+            <th>月間検索数</th>
+            <th style="width:44px;"></th>
+          </tr>
+        </thead>
+        <tbody id="rakkoBody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -499,9 +577,10 @@
     hideError();
     try {
       const params = new URLSearchParams({ keyword, api_key: apiKey });
-      const [res, sugRes] = await Promise.all([
+      const [res, sugRes, rakkoRes] = await Promise.all([
         fetch("/api/search?" + params),
-        fetch("/api/suggest?keyword=" + encodeURIComponent(keyword))
+        fetch("/api/suggest?keyword=" + encodeURIComponent(keyword)),
+        fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey))
       ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -509,6 +588,7 @@
       }
       renderResults(await res.json());
       if (sugRes.ok) renderSuggests(await sugRes.json());
+      if (rakkoRes.ok) renderRakkoKeywords(await rakkoRes.json());
     } catch (e) {
       showError(e.message);
     } finally {
@@ -564,6 +644,43 @@
     document.getElementById("resultsHeader").classList.add("show");
   }
 
+  function renderRakkoKeywords(data) {
+    const tbody = document.getElementById("rakkoBody");
+    const wrap  = document.getElementById("rakkoWrap");
+    tbody.innerHTML = "";
+    const results = data.results || [];
+    if (!results.length) return;
+    results.forEach(r => {
+      const diff = r.seo_difficulty ?? 0;
+      // SEO難易度バーの色: 低=緑, 中=黄, 高=赤
+      const barColor = diff < 35 ? "#22c55e" : diff < 60 ? "#f59e0b" : "#ef4444";
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td style="font-weight:600;">' + esc(r.keyword) + '</td>' +
+        '<td><div class="seo-bar-wrap">' +
+          '<div class="seo-bar"><div class="seo-bar-fill" style="width:' + diff + '%;background:' + barColor + ';"></div></div>' +
+          '<span class="seo-val">' + diff + '</span>' +
+        '</div></td>' +
+        '<td><span class="badge">' + (r.monthly_search ? r.monthly_search.toLocaleString() : "—") + '</span></td>' +
+        '<td><button class="swap-btn" title="このキーワードで検索" onclick="fillKeyword(' + JSON.stringify(r.keyword) + ')">' +
+          '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>' +
+        '</button></td>';
+      tbody.appendChild(tr);
+    });
+    wrap.classList.add("show");
+  }
+
+  function fillKeyword(kw) {
+    const input = document.getElementById("keyword");
+    input.value = kw;
+    input.focus();
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+    // 視覚フィードバック
+    input.style.transition = "box-shadow .2s";
+    input.style.boxShadow = "inset 0 2px 4px rgba(0,0,0,0.07), 0 0 0 3px rgba(230,57,70,0.30)";
+    setTimeout(() => { input.style.boxShadow = ""; }, 800);
+  }
+
   function renderSuggests(data) {
     const tags = document.getElementById("suggestTags");
     const wrap = document.getElementById("suggestWrap");
@@ -611,6 +728,7 @@
     document.getElementById("resultsHeader").classList.remove("show");
     document.getElementById("tableWrap").style.display = "none";
     document.getElementById("emptyState").classList.remove("show");
+    document.getElementById("rakkoWrap").classList.remove("show");
   }
   function showError(msg) {
     const el = document.getElementById("errorMsg");
