@@ -527,21 +527,22 @@
   </div>
 
   <div class="step-card glass section">
-    <div class="step-card-header" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="step-badge">1</div>
-        <h2>Step 1 — APIキー設定</h2>
-      </div>
-      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--muted);">
-        <input type="checkbox" id="skipApiKey" onchange="toggleApiKey(this)"
-          style="width:15px;height:15px;accent-color:var(--pink);cursor:pointer;">
-        設定しない
-      </label>
+    <div class="step-card-header">
+      <div class="step-badge">1</div>
+      <h2>Step 1 — APIキー設定</h2>
     </div>
-    <div id="apiKeyArea">
-    <div class="fields">
-      <div class="field">
-        <label for="apiKey">ラッコキーワード APIキー</label>
+
+    <!-- ラッコキーワード APIキー -->
+    <div class="field" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label for="apiKey" style="margin:0;">ラッコキーワード APIキー</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:.76rem;color:var(--muted);">
+          <input type="checkbox" id="skipApiKey" onchange="toggleApiKey(this)"
+            style="width:13px;height:13px;accent-color:var(--pink);cursor:pointer;">
+          設定しない
+        </label>
+      </div>
+      <div id="apiKeyArea">
         <div class="input-wrap">
           <input type="password" id="apiKey" placeholder="sk-xxxxxxxx" autocomplete="off" />
           <button class="toggle-eye" onclick="toggleEye('apiKey', this)" title="表示/非表示" aria-label="パスワードを表示">
@@ -549,11 +550,22 @@
           </button>
         </div>
       </div>
+      <div id="skipApiKeyNote" style="display:none;margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(234,179,8,0.10);box-shadow:inset 0 1px 1px rgba(255,255,255,0.6);">
+        <p style="font-size:.76rem;color:#B45309;">⚠️ 月間検索ボリュームとラッコキーワード 関連キーワードは表示されません。</p>
+      </div>
     </div>
-    </div><!-- /fields -->
-    <div style="margin-top:16px;" id="geminiKeyArea">
-      <div class="field" style="max-width:360px;">
-        <label for="geminiKey">Gemini APIキー <span style="font-size:.7rem;color:var(--muted);font-weight:400;">（行動予測キーワードに使用）</span></label>
+
+    <!-- Gemini APIキー -->
+    <div class="field">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label for="geminiKey" style="margin:0;">Gemini APIキー <span style="font-size:.7rem;color:var(--muted);font-weight:400;">（行動予測キーワードに使用）</span></label>
+        <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:.76rem;color:var(--muted);">
+          <input type="checkbox" id="skipGeminiKey" onchange="toggleGeminiKey(this)"
+            style="width:13px;height:13px;accent-color:var(--pink);cursor:pointer;">
+          設定しない
+        </label>
+      </div>
+      <div id="geminiKeyArea">
         <div class="input-wrap">
           <input type="password" id="geminiKey" placeholder="AIza..." autocomplete="off" />
           <button class="toggle-eye" onclick="toggleEye('geminiKey', this)" title="表示/非表示" aria-label="表示/非表示">
@@ -561,12 +573,12 @@
           </button>
         </div>
       </div>
+      <div id="skipGeminiNote" style="display:none;margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(234,179,8,0.10);box-shadow:inset 0 1px 1px rgba(255,255,255,0.6);">
+        <p style="font-size:.76rem;color:#B45309;">⚠️ Gemini 行動予測キーワードは表示されません。</p>
+      </div>
     </div>
-    <p class="note-text">🔒 キーはこのページ内のみで使用され、サーバーには保存されません。</p>
-    </div>
-    <div id="skipApiKeyNote" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;background:rgba(234,179,8,0.10);box-shadow:inset 0 1px 1px rgba(255,255,255,0.6);">
-      <p style="font-size:.8rem;color:#B45309;">⚠️ APIキー未設定のため、月間検索ボリュームとラッコキーワード 関連キーワードは表示されません。</p>
-    </div>
+
+    <p class="note-text" style="margin-top:14px;">🔒 キーはこのページ内のみで使用され、サーバーには保存されません。</p>
   </div>
 
   <div class="step-card glass section">
@@ -737,11 +749,14 @@
   let currentKeyword = "";
 
   function toggleApiKey(cb) {
-    const area = document.getElementById("apiKeyArea");
-    const note = document.getElementById("skipApiKeyNote");
-    area.style.display = cb.checked ? "none" : "block";
-    note.style.display  = cb.checked ? "block" : "none";
+    document.getElementById("apiKeyArea").style.display  = cb.checked ? "none" : "block";
+    document.getElementById("skipApiKeyNote").style.display = cb.checked ? "block" : "none";
     if (cb.checked) document.getElementById("apiKey").value = "";
+  }
+  function toggleGeminiKey(cb) {
+    document.getElementById("geminiKeyArea").style.display  = cb.checked ? "none" : "block";
+    document.getElementById("skipGeminiNote").style.display = cb.checked ? "block" : "none";
+    if (cb.checked) document.getElementById("geminiKey").value = "";
   }
 
   document.getElementById("keyword").addEventListener("keydown", e => {
@@ -776,7 +791,7 @@
         fetch("/api/search?" + params),
         fetch("/api/suggest?keyword=" + encodeURIComponent(keyword)),
         skipApi ? Promise.resolve(null) : fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey)),
-        geminiKey ? fetch("/api/gemini_predict?keyword=" + encodeURIComponent(keyword) + "&gemini_api_key=" + encodeURIComponent(geminiKey) + "&rakko_api_key=" + encodeURIComponent(apiKey)) : Promise.resolve(null)
+        (geminiKey && !document.getElementById("skipGeminiKey").checked) ? fetch("/api/gemini_predict?keyword=" + encodeURIComponent(keyword) + "&gemini_api_key=" + encodeURIComponent(geminiKey) + "&rakko_api_key=" + encodeURIComponent(apiKey)) : Promise.resolve(null)
       ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
