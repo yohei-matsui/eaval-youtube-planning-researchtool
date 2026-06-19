@@ -652,19 +652,38 @@
     if (!results.length) return;
     results.forEach(r => {
       const diff = r.seo_difficulty ?? 0;
-      // SEO難易度バーの色: 低=緑, 中=黄, 高=赤
       const barColor = diff < 35 ? "#22c55e" : diff < 60 ? "#f59e0b" : "#ef4444";
       const tr = document.createElement("tr");
-      tr.innerHTML =
-        '<td style="font-weight:600;">' + esc(r.keyword) + '</td>' +
-        '<td><div class="seo-bar-wrap">' +
+
+      const kwTd = document.createElement("td");
+      kwTd.style.fontWeight = "600";
+      kwTd.textContent = r.keyword;
+
+      const seoTd = document.createElement("td");
+      seoTd.innerHTML =
+        '<div class="seo-bar-wrap">' +
           '<div class="seo-bar"><div class="seo-bar-fill" style="width:' + diff + '%;background:' + barColor + ';"></div></div>' +
           '<span class="seo-val">' + diff + '</span>' +
-        '</div></td>' +
-        '<td><span class="badge">' + (r.monthly_search ? r.monthly_search.toLocaleString() : "—") + '</span></td>' +
-        '<td><button class="swap-btn" title="このキーワードで検索" onclick="fillKeyword(' + JSON.stringify(r.keyword) + ')">' +
-          '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>' +
-        '</button></td>';
+        '</div>';
+
+      const volTd = document.createElement("td");
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = r.monthly_search ? r.monthly_search.toLocaleString() : "—";
+      volTd.appendChild(badge);
+
+      const swapTd = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.className = "swap-btn";
+      btn.title = "このキーワードで検索";
+      btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+      btn.addEventListener("click", () => fillKeyword(r.keyword));
+      swapTd.appendChild(btn);
+
+      tr.appendChild(kwTd);
+      tr.appendChild(seoTd);
+      tr.appendChild(volTd);
+      tr.appendChild(swapTd);
       tbody.appendChild(tr);
     });
     wrap.classList.add("show");
