@@ -211,6 +211,60 @@ async def api_rakko_keywords(
 
 
 # ---------------------------------------------------------------------------
+# /api/vidiq_research
+# ---------------------------------------------------------------------------
+
+@app.get("/api/vidiq_research")
+async def api_vidiq_research(keyword: str = Query(..., description="検索キーワード")):
+    if not keyword.strip():
+        raise HTTPException(status_code=400, detail="keyword is required")
+
+    # --- VidIQ API 実装例（仮）---
+    # VidIQ API 契約後、以下を書き換えてください
+    # url = "https://api.vidiq.com/youtube/keyword/research"
+    # headers = {"X-Api-Key": os.environ.get("VIDIQ_API_KEY", "")}
+    # params = {"keyword": keyword, "country": "JP"}
+    # resp = requests.get(url, headers=headers, params=params, timeout=10)
+    # resp.raise_for_status()
+    # return JSONResponse(resp.json())
+    # ---------------------------------
+
+    # モックデータ（VidIQ APIレスポンス準拠）
+    import random, hashlib
+    seed = int(hashlib.md5(keyword.encode()).hexdigest(), 16) % 10000
+    rng = random.Random(seed)
+    volume      = round(rng.uniform(30, 95), 1)
+    competition = round(rng.uniform(20, 80), 1)
+    overall     = round((volume * 0.6 + (100 - competition) * 0.4), 1)
+    est_monthly = rng.randint(1000, 500000)
+
+    suffixes = ["入門", "使い方", "おすすめ", "初心者", "やり方", "方法", "無料", "比較", "メリット", "効果", "練習", "勉強"]
+    related = []
+    for s in suffixes:
+        v = round(rng.uniform(15, 80), 1)
+        c = round(rng.uniform(10, 75), 1)
+        related.append({
+            "keyword": f"{keyword} {s}",
+            "volume": v,
+            "competition": c,
+            "overall": round(v * 0.6 + (100 - c) * 0.4, 1),
+            "estimatedMonthlySearch": rng.randint(100, est_monthly // 2),
+        })
+
+    return JSONResponse({
+        "keyword": keyword,
+        "seedKeyword": {
+            "keyword": keyword,
+            "volume": volume,
+            "competition": competition,
+            "overall": overall,
+            "estimatedMonthlySearch": est_monthly,
+        },
+        "relatedKeywords": related,
+    })
+
+
+# ---------------------------------------------------------------------------
 # /api/open_browser
 # ---------------------------------------------------------------------------
 
