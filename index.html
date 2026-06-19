@@ -264,6 +264,26 @@
       font-size: .79rem; white-space: nowrap;
     }
 
+    /* ── Results divider ── */
+    .results-divider {
+      display: none; align-items: center; gap: 14px;
+      margin: 32px 0 20px;
+    }
+    .results-divider.show { display: flex; }
+    .results-divider::before, .results-divider::after {
+      content: ""; flex: 1; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.10), transparent);
+    }
+    .results-divider-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 16px; border-radius: 9999px;
+      background: rgba(255,255,255,0.70);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.9), 0 2px 8px rgba(0,0,0,0.06);
+      font-size: .75rem; font-weight: 700; color: var(--muted);
+      letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+    }
+
     /* ── Date badge levels (blue) ── */
     .date-1 { background: rgba(59,130,246,0.08); color: #1D4ED8; box-shadow: inset 0 1px 2px rgba(255,255,255,0.6); }
     .date-2 { background: rgba(59,130,246,0.16); color: #1D4ED8; box-shadow: inset 0 1px 2px rgba(255,255,255,0.5); }
