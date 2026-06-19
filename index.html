@@ -501,10 +501,18 @@
   </div>
 
   <div class="step-card glass section">
-    <div class="step-card-header">
-      <div class="step-badge">1</div>
-      <h2>Step 1 — APIキー設定</h2>
+    <div class="step-card-header" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="step-badge">1</div>
+        <h2>Step 1 — APIキー設定</h2>
+      </div>
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--muted);">
+        <input type="checkbox" id="skipApiKey" onchange="toggleApiKey(this)"
+          style="width:15px;height:15px;accent-color:var(--pink);cursor:pointer;">
+        設定しない
+      </label>
     </div>
+    <div id="apiKeyArea">
     <div class="fields">
       <div class="field">
         <label for="apiKey">ラッコキーワード APIキー</label>
@@ -517,6 +525,10 @@
       </div>
     </div>
     <p class="note-text">🔒 キーはこのページ内のみで使用され、サーバーには保存されません。</p>
+    </div>
+    <div id="skipApiKeyNote" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;background:rgba(234,179,8,0.10);box-shadow:inset 0 1px 1px rgba(255,255,255,0.6);">
+      <p style="font-size:.8rem;color:#B45309;">⚠️ APIキー未設定のため、月間検索ボリュームとラッコキーワード 関連キーワードは表示されません。</p>
+    </div>
   </div>
 
   <div class="step-card glass section">
@@ -664,6 +676,14 @@
 <script>
   let currentKeyword = "";
 
+  function toggleApiKey(cb) {
+    const area = document.getElementById("apiKeyArea");
+    const note = document.getElementById("skipApiKeyNote");
+    area.style.display = cb.checked ? "none" : "block";
+    note.style.display  = cb.checked ? "block" : "none";
+    if (cb.checked) document.getElementById("apiKey").value = "";
+  }
+
   document.getElementById("keyword").addEventListener("keydown", e => {
     if (e.key === "Enter") startSearch();
   });
@@ -690,18 +710,19 @@
     hideError();
     try {
       const params = new URLSearchParams({ keyword, api_key: apiKey });
+      const skipApi = document.getElementById("skipApiKey").checked;
       const [res, sugRes, rakkoRes] = await Promise.all([
         fetch("/api/search?" + params),
         fetch("/api/suggest?keyword=" + encodeURIComponent(keyword)),
-        fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey)),
+        skipApi ? Promise.resolve(null) : fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey))
       ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || "サーバーエラー (" + res.status + ")");
       }
-      renderResults(await res.json());
-      if (sugRes.ok) renderSuggests(await sugRes.json());
-      if (rakkoRes.ok) renderRakkoKeywords(await rakkoRes.json());
+      renderResults(await res.json(), skipApi);
+      if (sugRes && sugRes.ok) renderSuggests(await sugRes.json());
+      if (rakkoRes && rakkoRes.ok) renderRakkoKeywords(await rakkoRes.json());
     } catch (e) {
       showError(e.message);
     } finally {
@@ -709,7 +730,7 @@
     }
   }
 
-  function renderResults(data) {
+  function renderResults(data, skipApi) {
     document.getElementById("volKeyword").textContent = data.keyword || "—";
     document.getElementById("volMonthly").textContent = data.volume?.monthly_volume ?? "—";
     document.getElementById("volNote").textContent    = "";
