@@ -441,11 +441,13 @@
 
   <div class="results-header" id="resultsHeader">
     <h3 id="resultsTitle">検索結果</h3>
-    <button class="btn btn-outline" id="openBrowserBtn" onclick="openBrowser()">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      YouTubeで確認する
+    <button class="btn btn-outline" id="openBrowserBtn" onclick="openBrowser()" style="flex-direction:column;gap:2px;padding:10px 20px;">
+      <span style="display:flex;align-items:center;gap:6px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        YouTubeで確認する
+      </span>
+      <span style="font-size:.68rem;font-weight:400;color:var(--muted);letter-spacing:.01em;">シークレットブラウザが立ち上がります</span>
     </button>
-    <p style="font-size:.72rem;color:var(--muted);margin-top:6px;text-align:right;">シークレットブラウザが立ち上がります</p>
   </div>
 
   <div id="tableWrap" style="display:none;">
