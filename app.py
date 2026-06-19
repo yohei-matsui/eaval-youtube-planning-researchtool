@@ -252,11 +252,11 @@ async def api_gemini_predict(
     model = gemini_model if gemini_model in allowed_models else "gemini-2.5-flash"
     gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}"
     prompt = f"""あなたはYouTubeユーザーの行動を分析する専門家です。
-「{keyword}」を検索したユーザーが、次に検索しそうなキーワードを10個予測してください。
+「{keyword}」を検索したユーザーが、次に検索しそうなキーワードを30個予測してください。
 ユーザーの行動パターン・興味の遷移・深掘りニーズを考慮して、多様な角度から予測してください。
 
 必ず以下のJSON形式のみで回答してください（他のテキストは一切不要）:
-{{"keywords": ["キーワード1", "キーワード2", ..., "キーワード10"]}}"""
+{{"keywords": ["キーワード1", "キーワード2", ..., "キーワード30"]}}"""
 
     resp = requests.post(gemini_url, json={
         "contents": [{"parts": [{"text": prompt}]}],
@@ -290,7 +290,7 @@ async def api_gemini_predict(
     # --- ラッコキーワードAPIでボリューム取得（モック） ---
     import random, hashlib
     results = []
-    for kw in predicted[:10]:
+    for kw in predicted[:30]:
         seed = int(hashlib.md5(kw.encode()).hexdigest(), 16) % 10000
         rng = random.Random(seed)
         # 実装例:

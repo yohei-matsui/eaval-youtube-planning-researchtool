@@ -743,7 +743,7 @@
     <div class="gemini-header">
       <h3>Gemini 行動予測キーワード</h3>
       <span class="gemini-badge">Gemini AI</span>
-      <span style="font-size:.72rem;color:var(--muted);">上位 10 件</span>
+      <span id="geminiPageLabel" style="font-size:.72rem;color:var(--muted);">1〜10 件</span>
     </div>
     <div class="gemini-table-wrap">
       <table>
@@ -758,6 +758,11 @@
         </thead>
         <tbody id="geminiBody"></tbody>
       </table>
+    </div>
+    <!-- ページネーション -->
+    <div id="geminiPager" style="display:none; margin-top:12px; display:flex; justify-content:center; gap:8px;">
+      <button id="geminiPrevBtn" onclick="geminiPageMove(-1)" class="btn" style="padding:7px 18px;font-size:.8rem;background:rgba(255,255,255,0.7);border:1.5px solid rgba(0,0,0,0.12);color:var(--text);border-radius:20px;">← 前の10件</button>
+      <button id="geminiNextBtn" onclick="geminiPageMove(1)"  class="btn" style="padding:7px 18px;font-size:.8rem;background:rgba(255,255,255,0.7);border:1.5px solid rgba(0,0,0,0.12);color:var(--text);border-radius:20px;">次の10件 →</button>
     </div>
   </div>
 
@@ -995,11 +1000,44 @@
     }
   }
 
+  let geminiAllResults = [];
+  let geminiCurrentPage = 0;
+  const GEMINI_PAGE_SIZE = 10;
+
+  function geminiPageMove(dir) {
+    const maxPage = Math.ceil(geminiAllResults.length / GEMINI_PAGE_SIZE) - 1;
+    geminiCurrentPage = Math.max(0, Math.min(geminiCurrentPage + dir, maxPage));
+    renderGeminiPage();
+  }
+
+  function renderGeminiPage() {
+    const start = geminiCurrentPage * GEMINI_PAGE_SIZE;
+    const end   = start + GEMINI_PAGE_SIZE;
+    const page  = geminiAllResults.slice(start, end);
+    const total = geminiAllResults.length;
+    const maxPage = Math.ceil(total / GEMINI_PAGE_SIZE) - 1;
+
+    document.getElementById("geminiPageLabel").textContent =
+      `${start + 1}〜${Math.min(end, total)} 件 / 全 ${total} 件`;
+    document.getElementById("geminiPrevBtn").disabled = geminiCurrentPage === 0;
+    document.getElementById("geminiNextBtn").disabled = geminiCurrentPage >= maxPage;
+    document.getElementById("geminiPager").style.display = total > GEMINI_PAGE_SIZE ? "flex" : "none";
+
+    _renderGeminiRows(page, start);
+  }
+
   function renderGeminiPredict(data) {
     const wrap = document.getElementById("geminiWrap");
+    geminiAllResults = data.results || [];
+    geminiCurrentPage = 0;
+    if (!geminiAllResults.length) return;
+    renderGeminiPage();
+    wrap.classList.add("show");
+  }
+
+  function _renderGeminiRows(results, offset) {
     const tbody = document.getElementById("geminiBody");
     tbody.innerHTML = "";
-    const results = data.results || [];
     if (!results.length) return;
 
     // ラッコキーワードAPIキーが未入力の場合はボリューム・SEO列を非表示
@@ -1011,11 +1049,12 @@
 
     results.forEach((r, i) => {
       const tr = document.createElement("tr");
+      const absIndex = (offset || 0) + i;
 
       const rankTd = document.createElement("td");
       const rankSpan = document.createElement("span");
-      rankSpan.className = i < 3 ? "rank top3" : "rank";
-      rankSpan.textContent = i + 1;
+      rankSpan.className = absIndex < 3 ? "rank top3" : "rank";
+      rankSpan.textContent = absIndex + 1;
       rankTd.appendChild(rankSpan);
 
       const kwTd = document.createElement("td");
@@ -1056,7 +1095,6 @@
       tr.appendChild(seoTd); tr.appendChild(volTd); tr.appendChild(swapTd);
       tbody.appendChild(tr);
     });
-    wrap.classList.add("show");
   }
 
   // ラッコキーワード ソート
