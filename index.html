@@ -380,6 +380,19 @@
     .swap-btn:hover { background: rgba(230,57,70,0.12); color: var(--pink); }
 
 
+    /* ── Copy link button ── */
+    .copy-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(0,0,0,0.04);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      border: none; cursor: pointer; color: var(--muted);
+      transition: background .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { background: rgba(59,130,246,0.12); color: #1D4ED8; }
+    .copy-btn.copied { background: rgba(34,197,94,0.15); color: #15803D; }
+
     .empty { display: none; text-align: center; padding: 50px 20px; color: var(--muted); font-size: .9rem; }
     .empty.show { display: block; }
     .note-text { margin-top: 10px; font-size: .73rem; color: var(--muted); }
@@ -544,6 +557,7 @@
       <table>
         <thead>
           <tr>
+            <th style="width:40px;"></th>
             <th style="width:52px;">順位</th>
             <th>タイトル / チャンネル</th>
             <th>再生回数</th>
@@ -675,7 +689,28 @@
       const channelHtml = v.channel_url
         ? '<a href="' + esc(v.channel_url) + '" target="_blank" rel="noopener" class="channel-link">' + esc(v.channel) + '</a>'
         : '<span class="channel">' + esc(v.channel) + '</span>';
-      tr.innerHTML =
+      // コピーボタン列
+      const copyTd = document.createElement("td");
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "copy-btn";
+      copyBtn.title = "動画URLをコピー";
+      copyBtn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      copyBtn.addEventListener("click", () => {
+        const url = v.video_url || "";
+        if (!url) return;
+        navigator.clipboard.writeText(url).then(() => {
+          copyBtn.classList.add("copied");
+          copyBtn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+          setTimeout(() => {
+            copyBtn.classList.remove("copied");
+            copyBtn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+          }, 1500);
+        });
+      });
+      copyTd.appendChild(copyBtn);
+      tr.appendChild(copyTd);
+
+      tr.innerHTML +=
         '<td><span class="' + (v.rank <= 3 ? 'rank top3' : 'rank') + '">' + v.rank + '</span></td>' +
         '<td><div class="title-text">' + titleHtml + '</div><div>' + channelHtml + '</div></td>' +
         '<td><span class="badge ' + viewsLevelClass(v.views) + '">' + esc(v.views) + '</span></td>' +
