@@ -206,6 +206,16 @@ async def api_rakko_keywords(
         {"keyword": f"{keyword} 比較",        "seo_difficulty": 29, "monthly_search": 1300},
         {"keyword": f"{keyword} メリット",    "seo_difficulty": 22, "monthly_search":  880},
         {"keyword": f"{keyword} デメリット",  "seo_difficulty": 18, "monthly_search":  720},
+        {"keyword": f"{keyword} 上達",        "seo_difficulty": 35, "monthly_search":  650},
+        {"keyword": f"{keyword} まとめ",      "seo_difficulty": 48, "monthly_search":  590},
+        {"keyword": f"{keyword} 解説",        "seo_difficulty": 52, "monthly_search":  530},
+        {"keyword": f"{keyword} 基礎",        "seo_difficulty": 40, "monthly_search":  480},
+        {"keyword": f"{keyword} 応用",        "seo_difficulty": 31, "monthly_search":  420},
+        {"keyword": f"{keyword} コツ",        "seo_difficulty": 27, "monthly_search":  370},
+        {"keyword": f"{keyword} ランキング",   "seo_difficulty": 58, "monthly_search":  320},
+        {"keyword": f"{keyword} 違い",        "seo_difficulty": 23, "monthly_search":  280},
+        {"keyword": f"{keyword} 練習",        "seo_difficulty": 36, "monthly_search":  240},
+        {"keyword": f"{keyword} 勉強",        "seo_difficulty": 44, "monthly_search":  210},
     ]
     return JSONResponse({"keyword": keyword, "results": mock_results})
 
