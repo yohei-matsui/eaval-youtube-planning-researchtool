@@ -74,7 +74,9 @@ async def scrape_youtube(keyword: str) -> list[dict]:
                 "--disable-setuid-sandbox",
                 "--disable-dev-shm-usage",
                 "--disable-gpu",
-                "--single-process",
+                "--disable-extensions",
+                "--disable-default-apps",
+                "--window-size=1280,800",
             ]
         )
         page = await browser.new_page()
@@ -146,11 +148,15 @@ async def api_search(
     if not keyword.strip():
         raise HTTPException(status_code=400, detail="keyword is required")
 
-    # 並列実行
-    volume_task  = asyncio.create_task(fetch_rakko_volume(keyword, api_key))
-    scrape_task  = asyncio.create_task(scrape_youtube(keyword))
+    try:
+        # 並列実行
+        volume_task  = asyncio.create_task(fetch_rakko_volume(keyword, api_key))
+        scrape_task  = asyncio.create_task(scrape_youtube(keyword))
 
-    volume_data, scrape_data = await asyncio.gather(volume_task, scrape_task)
+        volume_data, scrape_data = await asyncio.gather(volume_task, scrape_task)
+    except Exception as e:
+        import traceback
+        raise HTTPException(status_code=500, detail=f"検索エラー: {str(e)}\n{traceback.format_exc()[-500:]}")
 
     return JSONResponse({
         "keyword": keyword,
