@@ -264,12 +264,28 @@ async def api_gemini_predict(
     }, timeout=15)
 
     if resp.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Gemini APIエラー: {resp.text[:200]}")
+        raise HTTPException(status_code=502, detail=f"Gemini APIエラー: {resp.text[:300]}")
 
     import json as _json, re as _re
-    raw = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-    raw = _re.sub(r"```json|```", "", raw).strip()
-    predicted = _json.loads(raw).get("keywords", [])
+    try:
+        resp_json = resp.json()
+        # finishReason が STOP 以外（MAX_TOKENS等）でも parts を取得
+        candidates = resp_json.get("candidates", [])
+        if not candidates:
+            raise HTTPException(status_code=502, detail=f"Gemini レスポンスにcandidatesがありません: {resp.text[:200]}")
+        parts = candidates[0].get("content", {}).get("parts", [])
+        if not parts:
+            raise HTTPException(status_code=502, detail=f"Gemini レスポンスにpartsがありません: {resp.text[:200]}")
+        raw = parts[0].get("text", "").strip()
+        raw = _re.sub(r"```json|```", "", raw).strip()
+        # JSONブロックだけ抽出
+        m = _re.search(r'\{.*\}', raw, _re.DOTALL)
+        raw = m.group(0) if m else raw
+        predicted = _json.loads(raw).get("keywords", [])
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gemini レスポンス解析エラー: {e} / raw={resp.text[:200]}")
 
     # --- ラッコキーワードAPIでボリューム取得（モック） ---
     import random, hashlib
