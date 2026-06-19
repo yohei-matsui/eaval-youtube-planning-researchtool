@@ -260,7 +260,7 @@ async def api_gemini_predict(
 
     resp = requests.post(gemini_url, json={
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 512}
+        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2048}
     }, timeout=15)
 
     if resp.status_code != 200:
