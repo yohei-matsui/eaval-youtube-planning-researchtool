@@ -367,6 +367,32 @@
     .rakko-header-left { display: flex; align-items: center; gap: 8px; }
     .rakko-header-btns { display: flex; gap: 6px; }
 
+    /* ── Gemini predict section ── */
+    .gemini-wrap { display: none; margin-top: 24px; }
+    .gemini-wrap.show { display: block; }
+    .gemini-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .gemini-header h3 { font-size: .95rem; font-weight: 700; }
+    .gemini-badge {
+      font-size: .68rem; font-weight: 700; padding: 2px 9px; border-radius: 9999px;
+      background: rgba(66,133,244,0.12); color: #1a56db;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);
+    }
+    .gemini-table-wrap {
+      background: var(--glass-bg); backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-inset); border-radius: var(--radius-outer); overflow: hidden;
+    }
+    .gemini-table-wrap table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+    .gemini-table-wrap thead { background: rgba(0,0,0,0.03); }
+    .gemini-table-wrap th {
+      text-align: left; padding: 11px 16px;
+      font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.06); white-space: nowrap;
+    }
+    .gemini-table-wrap td { padding: 12px 16px; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04); vertical-align: middle; }
+    .gemini-table-wrap tr:last-child td { box-shadow: none; }
+    .gemini-table-wrap tr:hover td { background: rgba(255,255,255,0.40); }
+
     /* ── Rakko keywords table ── */
     .rakko-wrap {
       display: none;
@@ -524,6 +550,18 @@
         </div>
       </div>
     </div>
+    </div><!-- /fields -->
+    <div style="margin-top:16px;" id="geminiKeyArea">
+      <div class="field" style="max-width:360px;">
+        <label for="geminiKey">Gemini APIキー <span style="font-size:.7rem;color:var(--muted);font-weight:400;">（行動予測キーワードに使用）</span></label>
+        <div class="input-wrap">
+          <input type="password" id="geminiKey" placeholder="AIza..." autocomplete="off" />
+          <button class="toggle-eye" onclick="toggleEye('geminiKey', this)" title="表示/非表示" aria-label="表示/非表示">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
     <p class="note-text">🔒 キーはこのページ内のみで使用され、サーバーには保存されません。</p>
     </div>
     <div id="skipApiKeyNote" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;background:rgba(234,179,8,0.10);box-shadow:inset 0 1px 1px rgba(255,255,255,0.6);">
@@ -658,6 +696,28 @@
     </div>
   </div>
 
+  <!-- Gemini predict -->
+  <div class="gemini-wrap" id="geminiWrap">
+    <div class="gemini-header">
+      <h3>Gemini 行動予測キーワード</h3>
+      <span class="gemini-badge">Gemini AI</span>
+      <span style="font-size:.72rem;color:var(--muted);">上位 15 件（月間ボリューム順）</span>
+    </div>
+    <div class="gemini-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px;"></th>
+            <th>予測キーワード</th>
+            <th>月間検索ボリューム</th>
+            <th style="width:44px;"></th>
+          </tr>
+        </thead>
+        <tbody id="geminiBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- VidIQ button after rakko -->
   <div id="vidiqBtnWrap" style="display:none; margin-top:16px; text-align:center;">
     <a id="vidiqBtn" href="https://app.vidiq.com/research/search" target="_blank" rel="noopener"
@@ -711,10 +771,12 @@
     try {
       const params = new URLSearchParams({ keyword, api_key: apiKey });
       const skipApi = document.getElementById("skipApiKey").checked;
-      const [res, sugRes, rakkoRes] = await Promise.all([
+      const geminiKey = document.getElementById("geminiKey").value.trim();
+      const [res, sugRes, rakkoRes, geminiRes] = await Promise.all([
         fetch("/api/search?" + params),
         fetch("/api/suggest?keyword=" + encodeURIComponent(keyword)),
-        skipApi ? Promise.resolve(null) : fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey))
+        skipApi ? Promise.resolve(null) : fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey)),
+        geminiKey ? fetch("/api/gemini_predict?keyword=" + encodeURIComponent(keyword) + "&gemini_api_key=" + encodeURIComponent(geminiKey) + "&rakko_api_key=" + encodeURIComponent(apiKey)) : Promise.resolve(null)
       ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -723,6 +785,7 @@
       renderResults(await res.json(), skipApi);
       if (sugRes && sugRes.ok) renderSuggests(await sugRes.json());
       if (rakkoRes && rakkoRes.ok) renderRakkoKeywords(await rakkoRes.json());
+      if (geminiRes && geminiRes.ok) renderGeminiPredict(await geminiRes.json());
     } catch (e) {
       showError(e.message);
     } finally {
@@ -817,6 +880,46 @@
       vidiqBtn.href = "https://app.vidiq.com/research/search?term=" + encodeURIComponent(currentKeyword);
     }
     if (vidiqBtnWrap) vidiqBtnWrap.style.display = "block";
+  }
+
+  function renderGeminiPredict(data) {
+    const wrap = document.getElementById("geminiWrap");
+    const tbody = document.getElementById("geminiBody");
+    tbody.innerHTML = "";
+    const results = data.results || [];
+    if (!results.length) return;
+    results.forEach((r, i) => {
+      const tr = document.createElement("tr");
+
+      const rankTd = document.createElement("td");
+      const rankSpan = document.createElement("span");
+      rankSpan.className = i < 3 ? "rank top3" : "rank";
+      rankSpan.textContent = i + 1;
+      rankTd.appendChild(rankSpan);
+
+      const kwTd = document.createElement("td");
+      kwTd.style.fontWeight = "600";
+      kwTd.textContent = r.keyword;
+
+      const volTd = document.createElement("td");
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = r.monthly_volume ? r.monthly_volume.toLocaleString() + " 回/月" : "—";
+      volTd.appendChild(badge);
+
+      const swapTd = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.className = "swap-btn";
+      btn.title = "このキーワードで検索";
+      btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+      btn.addEventListener("click", () => fillKeyword(r.keyword));
+      swapTd.appendChild(btn);
+
+      tr.appendChild(rankTd); tr.appendChild(kwTd);
+      tr.appendChild(volTd); tr.appendChild(swapTd);
+      tbody.appendChild(tr);
+    });
+    wrap.classList.add("show");
   }
 
   // ラッコキーワード ソート
@@ -985,6 +1088,7 @@
     document.getElementById("tableWrap").style.display = "none";
     document.getElementById("emptyState").classList.remove("show");
     document.getElementById("rakkoWrap").classList.remove("show");
+    document.getElementById("geminiWrap").classList.remove("show");
     document.getElementById("vidiqBtnWrap").style.display = "none";
   }
   function showError(msg) {
