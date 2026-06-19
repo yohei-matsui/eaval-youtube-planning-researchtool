@@ -969,8 +969,10 @@
       const geminiModel = document.getElementById("geminiModel")?.value || "gemini-2.5-flash";
       const res = await fetch("/api/gemini_predict?keyword=" + encodeURIComponent(currentKeyword) + "&gemini_api_key=" + encodeURIComponent(geminiKey) + "&rakko_api_key=" + encodeURIComponent(apiKey) + "&gemini_model=" + encodeURIComponent(geminiModel));
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "エラーが発生しました");
+        const raw = await res.text().catch(() => "");
+        let detail = raw;
+        try { detail = JSON.parse(raw).detail || raw; } catch(_) {}
+        throw new Error(`(${res.status}) ${detail.slice(0, 300)}`);
       }
       renderGeminiPredict(await res.json());
       // ボタンを成功表示に
