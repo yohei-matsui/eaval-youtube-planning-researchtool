@@ -342,6 +342,14 @@
     }
     .suggest-swap:hover { background: rgba(230,57,70,0.18); color: var(--pink); opacity: 1; }
 
+    /* ── Sortable header ── */
+    .sort-th { cursor: pointer; user-select: none; white-space: nowrap; }
+    .sort-th:hover { color: var(--text); }
+    .sort-th .sort-icon { display: inline-block; margin-left: 4px; opacity: .4; font-size: .8em; }
+    .sort-th.asc .sort-icon::after  { content: "▲"; }
+    .sort-th.desc .sort-icon::after { content: "▼"; }
+    .sort-th:not(.asc):not(.desc) .sort-icon::after { content: "⇅"; }
+
     /* ── Export buttons ── */
     .export-btn {
       display: inline-flex; align-items: center; gap: 5px;
@@ -561,7 +569,12 @@
 
   <!-- Suggest -->
   <div class="suggest-wrap" id="suggestWrap">
-    <div class="suggest-title">YouTubeサジェストキーワード</div>
+    <div class="suggest-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      YouTubeサジェストキーワード
+      <span style="font-size:.68rem;font-weight:400;color:var(--muted);letter-spacing:0;">
+        — ⇄ を押すとキーワード入力欄に自動入力されます
+      </span>
+    </div>
     <div class="suggest-tags" id="suggestTags"></div>
   </div>
 
@@ -623,8 +636,8 @@
         <thead>
           <tr>
             <th>キーワード</th>
-            <th>SEO難易度</th>
-            <th>月間検索数</th>
+            <th class="sort-th" id="sortSeo" onclick="sortRakko('seo')">SEO難易度<span class="sort-icon"></span></th>
+            <th class="sort-th" id="sortVol" onclick="sortRakko('vol')">月間検索数<span class="sort-icon"></span></th>
             <th style="width:44px;"></th>
           </tr>
         </thead>
@@ -768,47 +781,12 @@
   }
 
   function renderRakkoKeywords(data) {
-    const tbody = document.getElementById("rakkoBody");
     const wrap  = document.getElementById("rakkoWrap");
-    tbody.innerHTML = "";
-    const results = data.results || [];
-    if (!results.length) return;
-    results.forEach(r => {
-      const diff = r.seo_difficulty ?? 0;
-      const barColor = diff < 35 ? "#22c55e" : diff < 60 ? "#f59e0b" : "#ef4444";
-      const tr = document.createElement("tr");
-
-      const kwTd = document.createElement("td");
-      kwTd.style.fontWeight = "600";
-      kwTd.textContent = r.keyword;
-
-      const seoTd = document.createElement("td");
-      seoTd.innerHTML =
-        '<div class="seo-bar-wrap">' +
-          '<div class="seo-bar"><div class="seo-bar-fill" style="width:' + diff + '%;background:' + barColor + ';"></div></div>' +
-          '<span class="seo-val">' + diff + '</span>' +
-        '</div>';
-
-      const volTd = document.createElement("td");
-      const badge = document.createElement("span");
-      badge.className = "badge";
-      badge.textContent = r.monthly_search ? r.monthly_search.toLocaleString() : "—";
-      volTd.appendChild(badge);
-
-      const swapTd = document.createElement("td");
-      const btn = document.createElement("button");
-      btn.className = "swap-btn";
-      btn.title = "このキーワードで検索";
-      btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
-      btn.addEventListener("click", () => fillKeyword(r.keyword));
-      swapTd.appendChild(btn);
-
-      tr.appendChild(kwTd);
-      tr.appendChild(seoTd);
-      tr.appendChild(volTd);
-      tr.appendChild(swapTd);
-      tbody.appendChild(tr);
-    });
+    rakkoData = data.results || [];
+    rakkoSortState = { col: null, dir: 'asc' };
+    ["sortSeo","sortVol"].forEach(id => document.getElementById(id).classList.remove("asc","desc"));
+    if (!rakkoData.length) return;
+    renderRakkoRows(rakkoData);
     wrap.classList.add("show");
 
     // VidIQ ボタン表示・URL更新
@@ -818,6 +796,58 @@
       vidiqBtn.href = "https://app.vidiq.com/research/search?term=" + encodeURIComponent(currentKeyword);
     }
     if (vidiqBtnWrap) vidiqBtnWrap.style.display = "block";
+  }
+
+  // ラッコキーワード ソート
+  let rakkoSortState = { col: null, dir: 'asc' };
+  let rakkoData = [];
+
+  function sortRakko(col) {
+    if (rakkoSortState.col === col) {
+      rakkoSortState.dir = rakkoSortState.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      rakkoSortState.col = col;
+      rakkoSortState.dir = 'asc';
+    }
+    // ヘッダーアイコン更新
+    ["sortSeo","sortVol"].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove("asc","desc");
+    });
+    const activeId = col === 'seo' ? 'sortSeo' : 'sortVol';
+    document.getElementById(activeId).classList.add(rakkoSortState.dir);
+
+    // ソート実行
+    const sorted = [...rakkoData].sort((a, b) => {
+      const va = col === 'seo' ? (a.seo_difficulty ?? 0) : (a.monthly_search ?? 0);
+      const vb = col === 'seo' ? (b.seo_difficulty ?? 0) : (b.monthly_search ?? 0);
+      return rakkoSortState.dir === 'asc' ? va - vb : vb - va;
+    });
+    renderRakkoRows(sorted);
+  }
+
+  function renderRakkoRows(results) {
+    const tbody = document.getElementById("rakkoBody");
+    tbody.innerHTML = "";
+    results.forEach(r => {
+      const diff = r.seo_difficulty ?? 0;
+      const barColor = diff < 35 ? "#22c55e" : diff < 60 ? "#f59e0b" : "#ef4444";
+      const tr = document.createElement("tr");
+      const kwTd = document.createElement("td"); kwTd.style.fontWeight = "600"; kwTd.textContent = r.keyword;
+      const seoTd = document.createElement("td");
+      seoTd.innerHTML = '<div class="seo-bar-wrap"><div class="seo-bar"><div class="seo-bar-fill" style="width:'+diff+'%;background:'+barColor+';"></div></div><span class="seo-val">'+diff+'</span></div>';
+      const volTd = document.createElement("td");
+      const badge = document.createElement("span"); badge.className = "badge";
+      badge.textContent = r.monthly_search ? r.monthly_search.toLocaleString() : "—";
+      volTd.appendChild(badge);
+      const swapTd = document.createElement("td");
+      const btn = document.createElement("button"); btn.className = "swap-btn"; btn.title = "このキーワードで検索";
+      btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+      btn.addEventListener("click", () => fillKeyword(r.keyword));
+      swapTd.appendChild(btn);
+      tr.appendChild(kwTd); tr.appendChild(seoTd); tr.appendChild(volTd); tr.appendChild(swapTd);
+      tbody.appendChild(tr);
+    });
   }
 
   // ラッコキーワード CSV出力
