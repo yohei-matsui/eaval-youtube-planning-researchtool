@@ -731,6 +731,16 @@
     </div>
   </div>
 
+  <!-- AI解析ボタン -->
+  <div id="aiAnalyzeWrap" style="display:none; margin-top:16px; text-align:center;">
+    <button id="aiAnalyzeBtn" onclick="runGeminiAnalysis()" class="btn btn-primary" style="padding:11px 28px;">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="18" cy="6" r="3" fill="currentColor" stroke="none"/></svg>
+      AIで解析
+    </button>
+    <p style="margin-top:6px; font-size:.71rem; color:var(--muted);">Gemini AIが行動予測キーワードを生成します</p>
+    <div id="aiAnalyzeError" style="display:none;margin-top:8px;padding:8px 14px;border-radius:8px;background:rgba(230,57,70,0.07);color:#B91C1C;font-size:.8rem;"></div>
+  </div>
+
   <!-- VidIQ button after rakko -->
   <div id="vidiqBtnWrap" style="display:none; margin-top:16px; text-align:center;">
     <a id="vidiqBtn" href="https://app.vidiq.com/research/search" target="_blank" rel="noopener"
@@ -787,12 +797,10 @@
     try {
       const params = new URLSearchParams({ keyword, api_key: apiKey });
       const skipApi = document.getElementById("skipApiKey").checked;
-      const geminiKey = document.getElementById("geminiKey").value.trim();
-      const [res, sugRes, rakkoRes, geminiRes] = await Promise.all([
+      const [res, sugRes, rakkoRes] = await Promise.all([
         fetch("/api/search?" + params),
         fetch("/api/suggest?keyword=" + encodeURIComponent(keyword)),
-        skipApi ? Promise.resolve(null) : fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey)),
-        (geminiKey && !document.getElementById("skipGeminiKey").checked) ? fetch("/api/gemini_predict?keyword=" + encodeURIComponent(keyword) + "&gemini_api_key=" + encodeURIComponent(geminiKey) + "&rakko_api_key=" + encodeURIComponent(apiKey)) : Promise.resolve(null)
+        skipApi ? Promise.resolve(null) : fetch("/api/rakko_keywords?keyword=" + encodeURIComponent(keyword) + "&api_key=" + encodeURIComponent(apiKey))
       ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -801,7 +809,6 @@
       renderResults(await res.json(), skipApi);
       if (sugRes && sugRes.ok) renderSuggests(await sugRes.json());
       if (rakkoRes && rakkoRes.ok) renderRakkoKeywords(await rakkoRes.json());
-      if (geminiRes && geminiRes.ok) renderGeminiPredict(await geminiRes.json());
     } catch (e) {
       showError(e.message);
     } finally {
@@ -889,6 +896,9 @@
     renderRakkoRows(rakkoData);
     wrap.classList.add("show");
 
+    // AIで解析ボタン表示
+    document.getElementById("aiAnalyzeWrap").style.display = "block";
+
     // VidIQ ボタン表示・URL更新
     const vidiqBtn = document.getElementById("vidiqBtn");
     const vidiqBtnWrap = document.getElementById("vidiqBtnWrap");
@@ -896,6 +906,43 @@
       vidiqBtn.href = "https://app.vidiq.com/research/search?term=" + encodeURIComponent(currentKeyword);
     }
     if (vidiqBtnWrap) vidiqBtnWrap.style.display = "block";
+  }
+
+  async function runGeminiAnalysis() {
+    const geminiKey = document.getElementById("geminiKey").value.trim();
+    const skipGemini = document.getElementById("skipGeminiKey").checked;
+    const errEl = document.getElementById("aiAnalyzeError");
+    errEl.style.display = "none";
+
+    if (skipGemini || !geminiKey) {
+      errEl.textContent = "Gemini APIキーを入力してください（Step 1）";
+      errEl.style.display = "block";
+      return;
+    }
+    const apiKey = document.getElementById("apiKey").value.trim();
+    const btn = document.getElementById("aiAnalyzeBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="spinner" style="width:14px;height:14px;border-width:2px;" viewBox="0 0 24 24"></svg> 解析中...';
+
+    try {
+      const res = await fetch("/api/gemini_predict?keyword=" + encodeURIComponent(currentKeyword) + "&gemini_api_key=" + encodeURIComponent(geminiKey) + "&rakko_api_key=" + encodeURIComponent(apiKey));
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "エラーが発生しました");
+      }
+      renderGeminiPredict(await res.json());
+      // ボタンを成功表示に
+      btn.innerHTML = '✓ 解析完了';
+      setTimeout(() => {
+        btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="18" cy="6" r="3" fill="currentColor" stroke="none"/></svg> AIで解析';
+        btn.disabled = false;
+      }, 2000);
+    } catch(e) {
+      errEl.textContent = "エラー: " + e.message;
+      errEl.style.display = "block";
+      btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="18" cy="6" r="3" fill="currentColor" stroke="none"/></svg> AIで解析';
+      btn.disabled = false;
+    }
   }
 
   function renderGeminiPredict(data) {
@@ -1105,6 +1152,8 @@
     document.getElementById("emptyState").classList.remove("show");
     document.getElementById("rakkoWrap").classList.remove("show");
     document.getElementById("geminiWrap").classList.remove("show");
+    document.getElementById("aiAnalyzeWrap").style.display = "none";
+    document.getElementById("aiAnalyzeError").style.display = "none";
     document.getElementById("vidiqBtnWrap").style.display = "none";
   }
   function showError(msg) {
