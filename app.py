@@ -61,81 +61,87 @@ async def fetch_rakko_volume(keyword: str, api_key: str) -> dict:
 
 
 async def scrape_youtube(keyword: str) -> list[dict]:
-    from playwright.async_api import async_playwright
+    """YouTube Innertube API（内部JSON API）で検索結果を取得する。Playwrightは使わない。"""
+    url = "https://www.youtube.com/youtubei/v1/search?prettyPrint=false"
+    payload = {
+        "context": {
+            "client": {
+                "clientName": "WEB",
+                "clientVersion": "2.20240601.00.00",
+                "hl": "ja",
+                "gl": "JP",
+            }
+        },
+        "query": keyword,
+        "params": "EgIQAQ%3D%3D",  # 動画のみフィルタ
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0.0.0 Safari/537.36"
+        ),
+        "Accept-Language": "ja-JP,ja;q=0.9",
+        "X-YouTube-Client-Name": "1",
+        "X-YouTube-Client-Version": "2.20240601.00.00",
+    }
 
-    search_url = f"https://www.youtube.com/results?search_query={quote_plus(keyword)}"
+    resp = requests.post(url, json=payload, headers=headers, timeout=15)
+    resp.raise_for_status()
+    data = resp.json()
+
     results = []
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-                "--disable-extensions",
-                "--disable-default-apps",
-                "--window-size=1280,800",
-            ]
+    try:
+        sections = (
+            data["contents"]
+            ["twoColumnSearchResultsRenderer"]
+            ["primaryContents"]
+            ["sectionListRenderer"]
+            ["contents"]
         )
-        page = await browser.new_page()
+        for section in sections:
+            items = section.get("itemSectionRenderer", {}).get("contents", [])
+            for item in items:
+                vr = item.get("videoRenderer")
+                if not vr:
+                    continue
 
-        # ユーザーエージェントを一般的なブラウザに偽装
-        await page.set_extra_http_headers({
-            "Accept-Language": "ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7"
-        })
+                video_id = vr.get("videoId", "")
+                title    = "".join(r.get("text", "") for r in vr.get("title", {}).get("runs", []))
+                channel  = "".join(r.get("text", "") for r in vr.get("ownerText", {}).get("runs", []))
 
-        await page.goto(search_url, wait_until="networkidle", timeout=30000)
+                ch_base = (
+                    vr.get("ownerText", {})
+                    .get("runs", [{}])[0]
+                    .get("navigationEndpoint", {})
+                    .get("browseEndpoint", {})
+                    .get("canonicalBaseUrl", "")
+                )
+                channel_url = f"https://www.youtube.com{ch_base}" if ch_base else ""
 
-        # 動画カードが表示されるまで待機
-        await page.wait_for_selector("ytd-video-renderer", timeout=15000)
-
-        # 上位10件を取得
-        videos = await page.query_selector_all("ytd-video-renderer")
-        for i, video in enumerate(videos[:10], start=1):
-            try:
-                title_el   = await video.query_selector("#video-title")
-                channel_el = await video.query_selector("#channel-name a, #channel-name yt-formatted-string")
-                meta_els   = await video.query_selector_all("#metadata-line span")
-
-                title   = (await title_el.inner_text()).strip()   if title_el   else "N/A"
-                channel = (await channel_el.inner_text()).strip() if channel_el else "N/A"
-
-                # 動画URL
-                video_url = ""
-                if title_el:
-                    href = await title_el.get_attribute("href")
-                    if href:
-                        video_url = f"https://www.youtube.com{href}" if href.startswith("/") else href
-
-                # チャンネルURL
-                channel_url = ""
-                channel_a = await video.query_selector("#channel-name a")
-                if channel_a:
-                    href = await channel_a.get_attribute("href")
-                    if href:
-                        channel_url = f"https://www.youtube.com{href}" if href.startswith("/") else href
-
-                views = "N/A"
-                date  = "N/A"
-                if len(meta_els) >= 2:
-                    views = (await meta_els[0].inner_text()).strip()
-                    date  = (await meta_els[1].inner_text()).strip()
+                views = (
+                    vr.get("viewCountText", {}).get("simpleText", "")
+                    or "".join(r.get("text", "") for r in vr.get("viewCountText", {}).get("runs", []))
+                    or "N/A"
+                )
+                date = vr.get("publishedTimeText", {}).get("simpleText", "N/A")
 
                 results.append({
-                    "rank":        i,
-                    "title":       title,
-                    "video_url":   video_url,
-                    "channel":     channel,
+                    "rank":        len(results) + 1,
+                    "title":       title or "N/A",
+                    "video_url":   f"https://www.youtube.com/watch?v={video_id}" if video_id else "",
+                    "channel":     channel or "N/A",
                     "channel_url": channel_url,
                     "views":       views,
                     "date":        date,
                 })
-            except Exception:
-                continue
-
-        await browser.close()
+                if len(results) >= 10:
+                    break
+            if len(results) >= 10:
+                break
+    except (KeyError, IndexError, TypeError) as e:
+        raise RuntimeError(f"YouTube レスポンス解析エラー: {e}")
 
     return results
 
