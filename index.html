@@ -440,6 +440,24 @@
     .seo-bar-fill { height: 100%; border-radius: 9999px; }
     .seo-val { font-size: .82rem; color: var(--muted); white-space: nowrap; }
 
+    .model-toggle {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(0,0,0,0.13);
+      background: rgba(255,255,255,0.6);
+      font-size: .78rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .18s;
+      backdrop-filter: blur(8px);
+    }
+    .model-toggle:hover { border-color: var(--pink); color: var(--pink); }
+    .model-toggle.active {
+      background: var(--pink);
+      border-color: var(--pink);
+      color: #fff;
+      font-weight: 600;
+    }
     .swap-btn {
       display: inline-flex; align-items: center; justify-content: center;
       width: 30px; height: 30px; border-radius: 50%;
@@ -572,6 +590,16 @@
           <button class="toggle-eye" onclick="toggleEye('geminiKey', this)" title="表示/非表示" aria-label="表示/非表示">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
+        </div>
+        <!-- モデル選択 -->
+        <div style="margin-top:10px;">
+          <label style="font-size:.76rem;color:var(--muted);display:block;margin-bottom:6px;">使用モデル</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="geminiModelBtns">
+            <button type="button" class="model-toggle active" data-model="gemini-2.5-flash" onclick="selectGeminiModel(this)">gemini-2.5-flash（推奨）</button>
+            <button type="button" class="model-toggle" data-model="gemini-2.0-flash" onclick="selectGeminiModel(this)">gemini-2.0-flash</button>
+          </div>
+          <input type="hidden" id="geminiModel" value="gemini-2.5-flash">
+          <p style="margin-top:6px;font-size:.72rem;color:var(--muted);">※クォータエラーが続く場合は別のモデルをお試しください</p>
         </div>
       </div>
       <div id="skipGeminiNote" style="display:none;margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(234,179,8,0.10);box-shadow:inset 0 1px 1px rgba(255,255,255,0.6);">
@@ -723,7 +751,8 @@
           <tr>
             <th style="width:40px;"></th>
             <th>予測キーワード</th>
-            <th>月間検索ボリューム</th>
+            <th id="geminiSeoHeader">SEO難易度</th>
+            <th id="geminiVolHeader">月間検索ボリューム</th>
             <th style="width:44px;"></th>
           </tr>
         </thead>
@@ -765,6 +794,12 @@
     document.getElementById("skipApiKeyNote").style.display = cb.checked ? "block" : "none";
     if (cb.checked) document.getElementById("apiKey").value = "";
   }
+  function selectGeminiModel(btn) {
+    document.querySelectorAll(".model-toggle").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("geminiModel").value = btn.dataset.model;
+  }
+
   function toggleGeminiKey(cb) {
     document.getElementById("geminiKeyArea").style.display  = cb.checked ? "none" : "block";
     document.getElementById("skipGeminiNote").style.display = cb.checked ? "block" : "none";
@@ -809,7 +844,12 @@
       }
       renderResults(await res.json(), skipApi);
       if (sugRes && sugRes.ok) renderSuggests(await sugRes.json());
-      if (rakkoRes && rakkoRes.ok) renderRakkoKeywords(await rakkoRes.json());
+      if (rakkoRes && rakkoRes.ok) {
+        renderRakkoKeywords(await rakkoRes.json());
+      } else {
+        // ラッコAPIキー未設定でもAIで解析ボタンは表示する
+        document.getElementById("aiAnalyzeWrap").style.display = "block";
+      }
     } catch (e) {
       showError(e.message);
     } finally {
@@ -926,7 +966,8 @@
     btn.innerHTML = '<svg class="spinner" style="width:14px;height:14px;border-width:2px;" viewBox="0 0 24 24"></svg> 解析中...';
 
     try {
-      const res = await fetch("/api/gemini_predict?keyword=" + encodeURIComponent(currentKeyword) + "&gemini_api_key=" + encodeURIComponent(geminiKey) + "&rakko_api_key=" + encodeURIComponent(apiKey));
+      const geminiModel = document.getElementById("geminiModel")?.value || "gemini-2.5-flash";
+      const res = await fetch("/api/gemini_predict?keyword=" + encodeURIComponent(currentKeyword) + "&gemini_api_key=" + encodeURIComponent(geminiKey) + "&rakko_api_key=" + encodeURIComponent(apiKey) + "&gemini_model=" + encodeURIComponent(geminiModel));
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || "エラーが発生しました");
@@ -952,6 +993,14 @@
     tbody.innerHTML = "";
     const results = data.results || [];
     if (!results.length) return;
+
+    // ラッコキーワードAPIキーが未入力の場合はボリューム・SEO列を非表示
+    const skipRakko = document.getElementById("skipRakkoKey")?.checked;
+    const rakkoKeyVal = document.getElementById("apiKey")?.value.trim();
+    const showVolume = !skipRakko && !!rakkoKeyVal;
+    document.getElementById("geminiVolHeader").style.display = showVolume ? "" : "none";
+    document.getElementById("geminiSeoHeader").style.display = showVolume ? "" : "none";
+
     results.forEach((r, i) => {
       const tr = document.createElement("tr");
 
@@ -965,7 +1014,23 @@
       kwTd.style.fontWeight = "600";
       kwTd.textContent = r.keyword;
 
+      // SEO難易度
+      const seoTd = document.createElement("td");
+      seoTd.style.display = showVolume ? "" : "none";
+      if (r.seo_difficulty != null) {
+        const seoBadge = document.createElement("span");
+        const sd = r.seo_difficulty;
+        seoBadge.className = "badge";
+        seoBadge.textContent = sd;
+        seoBadge.style.background = sd >= 70 ? "rgba(220,38,38,0.12)" : sd >= 40 ? "rgba(234,179,8,0.15)" : "rgba(34,197,94,0.13)";
+        seoBadge.style.color      = sd >= 70 ? "#B91C1C"              : sd >= 40 ? "#92400E"              : "#15803D";
+        seoTd.appendChild(seoBadge);
+      } else {
+        seoTd.textContent = "—";
+      }
+
       const volTd = document.createElement("td");
+      volTd.style.display = showVolume ? "" : "none";
       const badge = document.createElement("span");
       badge.className = "badge";
       badge.textContent = r.monthly_volume ? r.monthly_volume.toLocaleString() + " 回/月" : "—";
@@ -980,7 +1045,7 @@
       swapTd.appendChild(btn);
 
       tr.appendChild(rankTd); tr.appendChild(kwTd);
-      tr.appendChild(volTd); tr.appendChild(swapTd);
+      tr.appendChild(seoTd); tr.appendChild(volTd); tr.appendChild(swapTd);
       tbody.appendChild(tr);
     });
     wrap.classList.add("show");

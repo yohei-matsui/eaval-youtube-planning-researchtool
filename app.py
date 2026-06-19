@@ -219,6 +219,7 @@ async def api_gemini_predict(
     keyword: str = Query(...),
     gemini_api_key: str = Query("", description="Gemini APIキー"),
     rakko_api_key: str = Query("", description="ラッコキーワードAPIキー"),
+    gemini_model: str = Query("gemini-2.5-flash", description="使用するGeminiモデル"),
 ):
     if not keyword.strip():
         raise HTTPException(status_code=400, detail="keyword is required")
@@ -226,7 +227,9 @@ async def api_gemini_predict(
         raise HTTPException(status_code=400, detail="Gemini APIキーを入力してください")
 
     # --- Gemini でキーワード予測 ---
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+    allowed_models = {"gemini-2.5-flash", "gemini-2.0-flash"}
+    model = gemini_model if gemini_model in allowed_models else "gemini-2.5-flash"
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}"
     prompt = f"""あなたはYouTubeユーザーの行動を分析する専門家です。
 「{keyword}」を検索したユーザーが、次に検索しそうなキーワードを15個予測してください。
 ユーザーの行動パターン・興味の遷移・深掘りニーズを考慮して、多様な角度から予測してください。
@@ -258,8 +261,10 @@ async def api_gemini_predict(
         #     headers={"Authorization": f"Bearer {rakko_api_key}"},
         #     params={"keyword": kw, "country": "jp"}, timeout=8)
         # volume = vol_resp.json().get("volume")
+        # seo   = vol_resp.json().get("seo_difficulty")
         volume = rng.randint(100, 50000)
-        results.append({"keyword": kw, "monthly_volume": volume})
+        seo    = rng.randint(5, 95)
+        results.append({"keyword": kw, "monthly_volume": volume, "seo_difficulty": seo})
 
     results.sort(key=lambda x: x["monthly_volume"], reverse=True)
     return JSONResponse({"keyword": keyword, "results": results})
