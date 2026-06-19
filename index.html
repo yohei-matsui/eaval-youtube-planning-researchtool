@@ -714,7 +714,7 @@
     document.getElementById("volMonthly").textContent = data.volume?.monthly_volume ?? "—";
     document.getElementById("volNote").textContent    = "";
     document.getElementById("resultsDivider").classList.add("show");
-    document.getElementById("volumeBanner").classList.add("show");
+    if (!skipApi) document.getElementById("volumeBanner").classList.add("show");
 
     const num = data.volume?.monthly_volume_num ?? null;
     const judgeEl = document.getElementById("volJudge");
