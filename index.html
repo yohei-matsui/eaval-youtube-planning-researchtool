@@ -847,8 +847,14 @@
       if (rakkoRes && rakkoRes.ok) {
         renderRakkoKeywords(await rakkoRes.json());
       } else {
-        // ラッコAPIキー未設定でもAIで解析ボタンは表示する
+        // ラッコAPIキー未設定でもAIで解析・VidIQボタンは表示する
         document.getElementById("aiAnalyzeWrap").style.display = "block";
+        const vidiqBtn = document.getElementById("vidiqBtn");
+        const vidiqBtnWrap = document.getElementById("vidiqBtnWrap");
+        if (vidiqBtn && currentKeyword) {
+          vidiqBtn.href = "https://app.vidiq.com/research/search?term=" + encodeURIComponent(currentKeyword);
+        }
+        if (vidiqBtnWrap) vidiqBtnWrap.style.display = "block";
       }
     } catch (e) {
       showError(e.message);
