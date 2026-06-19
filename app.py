@@ -67,7 +67,16 @@ async def scrape_youtube(keyword: str) -> list[dict]:
     results = []
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--single-process",
+            ]
+        )
         page = await browser.new_page()
 
         # ユーザーエージェントを一般的なブラウザに偽装
