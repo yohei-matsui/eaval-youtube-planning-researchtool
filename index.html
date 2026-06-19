@@ -204,9 +204,10 @@
       font-size: 1.05rem; font-weight: 800;
       box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);
     }
-    .vol-judge.red    { background: rgba(220,38,38,0.10);  color: #DC2626; }
-    .vol-judge.yellow { background: rgba(234,179,8,0.12);  color: #B45309; }
-    .vol-judge.green  { background: rgba(34,197,94,0.12);  color: #15803D; }
+    .vol-judge.red    { background: rgba(220,38,38,0.12);  color: #DC2626; }
+    .vol-judge.yellow { background: rgba(234,179,8,0.14);  color: #B45309; }
+    .vol-judge.green  { background: rgba(34,197,94,0.14);  color: #15803D; }
+    .vol-judge.blue   { background: rgba(59,130,246,0.14); color: #1D4ED8; }
     .vol-judge-label  { font-size: .7rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 3px; }
 
     .results-header {
@@ -477,9 +478,10 @@
     const judgeEl = document.getElementById("volJudge");
     if (num !== null) {
       let cls, mark;
-      if (num < 1000)      { cls = "red";    mark = "△"; }
-      else if (num < 3000) { cls = "yellow"; mark = "○"; }
-      else                 { cls = "green";  mark = "◎"; }
+      if (num < 1000)      { cls = "red";    mark = "×"; }
+      else if (num < 3000) { cls = "yellow"; mark = "△"; }
+      else if (num < 5000) { cls = "green";  mark = "○"; }
+      else                 { cls = "blue";   mark = "◎"; }
       judgeEl.className = "vol-judge " + cls;
       judgeEl.textContent = mark;
       judgeEl.style.display = "inline-flex";
