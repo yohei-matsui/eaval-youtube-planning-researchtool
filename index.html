@@ -519,6 +519,14 @@
     <div class="error-msg" id="errorMsg"></div>
   </div>
 
+  <!-- Results divider -->
+  <div class="results-divider" id="resultsDivider">
+    <div class="results-divider-label">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      検索結果
+    </div>
+  </div>
+
   <div class="volume-banner section" id="volumeBanner">
     <div class="vol-item">
       <span>キーワード</span>
@@ -657,6 +665,7 @@
     document.getElementById("volKeyword").textContent = data.keyword || "—";
     document.getElementById("volMonthly").textContent = data.volume?.monthly_volume ?? "—";
     document.getElementById("volNote").textContent    = "";
+    document.getElementById("resultsDivider").classList.add("show");
     document.getElementById("volumeBanner").classList.add("show");
 
     const num = data.volume?.monthly_volume_num ?? null;
@@ -844,6 +853,7 @@
     document.getElementById("loader").classList.toggle("active", f);
   }
   function hideResults() {
+    document.getElementById("resultsDivider").classList.remove("show");
     document.getElementById("volumeBanner").classList.remove("show");
     document.getElementById("suggestWrap").classList.remove("show");
     document.getElementById("resultsHeader").classList.remove("show");
