@@ -63,7 +63,7 @@
     .header-text h1 { font-size: 1rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
     .header-text span { font-size: .72rem; color: var(--muted); }
 
-    main { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+    main { max-width: 860px; margin: 0 auto; padding: 40px 20px 120px; }
     .section { margin-bottom: 18px; }
 
     .hero { padding: 26px 30px; }
@@ -375,6 +375,29 @@
     .empty { display: none; text-align: center; padding: 50px 20px; color: var(--muted); font-size: .9rem; }
     .empty.show { display: block; }
     .note-text { margin-top: 10px; font-size: .73rem; color: var(--muted); }
+
+    /* ── VidIQ footer ── */
+    .vidiq-footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 -1px 0 rgba(0,0,0,0.06);
+      padding: 12px 24px;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      z-index: 200;
+    }
+    .vidiq-footer a {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 22px; border-radius: 9999px;
+      background: rgba(0,0,0,0.04);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.85), 0 2px 8px rgba(0,0,0,0.06);
+      color: var(--text); font-size: .9rem; font-weight: 700;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .vidiq-footer a:hover { background: rgba(0,0,0,0.08); }
+    .vidiq-footer span { font-size: .72rem; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -526,16 +549,7 @@
 
   <div class="empty" id="emptyState">検索結果が見つかりませんでした。別のキーワードをお試しください。</div>
 
-  <!-- VidIQ ボタン -->
-  <div id="vidiqBtnWrap" style="display:none; margin-top:28px; text-align:center;">
-    <a id="vidiqBtn" href="#" target="_blank" rel="noopener"
-       class="btn btn-outline"
-       style="display:inline-flex; gap:8px; align-items:center; padding:13px 28px; border-radius:9999px; font-size:.95rem; text-decoration:none;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-      VidIQで調べる
-    </a>
-    <p style="margin-top:8px; font-size:.72rem; color:var(--muted);">VidIQのキーワードリサーチページが開きます</p>
-  </div>
+
 
   <!-- Rakko keywords -->
   <div class="rakko-wrap" id="rakkoWrap">
@@ -559,6 +573,15 @@
   </div>
 
 </main>
+
+<!-- VidIQ fixed footer -->
+<div class="vidiq-footer">
+  <a id="vidiqBtn" href="https://vidiq.com/youtube-keyword-explorer/" target="_blank" rel="noopener">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+    VidIQで調べる
+  </a>
+  <span>VidIQのキーワードリサーチページが開きます</span>
+</div>
 
 <script>
   let currentKeyword = "";
@@ -653,12 +676,10 @@
     });
     document.getElementById("tableWrap").style.display = "block";
 
-    // VidIQ ボタン表示
-    const vidiqBtnWrap = document.getElementById("vidiqBtnWrap");
+    // VidIQ ボタンURL更新
     const vidiqBtn = document.getElementById("vidiqBtn");
     if (vidiqBtn) {
       vidiqBtn.href = "https://vidiq.com/youtube-keyword-explorer/?keyword=" + encodeURIComponent(data.keyword || "");
-      vidiqBtnWrap.style.display = "block";
     }
     document.getElementById("resultsTitle").textContent = "検索結果 — 上位 " + videos.length + " 件";
     document.getElementById("resultsHeader").classList.add("show");
@@ -767,7 +788,6 @@
     document.getElementById("resultsHeader").classList.remove("show");
     document.getElementById("tableWrap").style.display = "none";
     document.getElementById("emptyState").classList.remove("show");
-    document.getElementById("vidiqBtnWrap").style.display = "none";
     document.getElementById("rakkoWrap").classList.remove("show");
   }
   function showError(msg) {
