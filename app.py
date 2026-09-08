@@ -253,7 +253,7 @@ async def api_gemini_predict(
         raise HTTPException(status_code=400, detail="Gemini APIキーを入力してください")
 
     # --- Gemini でキーワード予測 ---
-    allowed_models = {"gemini-2.5-flash", "gemini-2.0-flash"}
+    allowed_models = {"gemini-2.5-flash", "gemini-2.5-flash-lite"}
     model = gemini_model if gemini_model in allowed_models else "gemini-2.5-flash"
     gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}"
     prompt = f"""あなたはYouTubeユーザーの行動を分析する専門家です。
