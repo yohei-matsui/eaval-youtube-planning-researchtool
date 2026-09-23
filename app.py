@@ -245,7 +245,7 @@ async def api_gemini_predict(
     keyword: str = Query(...),
     gemini_api_key: str = Query("", description="Gemini APIキー"),
     rakko_api_key: str = Query("", description="ラッコキーワードAPIキー"),
-    gemini_model: str = Query("gemini-2.5-flash", description="使用するGeminiモデル"),
+    gemini_model: str = Query("gemini-3.8-flash", description="使用するGeminiモデル"),
 ):
     if not keyword.strip():
         raise HTTPException(status_code=400, detail="keyword is required")
@@ -253,8 +253,8 @@ async def api_gemini_predict(
         raise HTTPException(status_code=400, detail="Gemini APIキーを入力してください")
 
     # --- Gemini でキーワード予測 ---
-    allowed_models = {"gemini-2.5-flash", "gemini-2.5-flash-lite"}
-    model = gemini_model if gemini_model in allowed_models else "gemini-2.5-flash"
+    allowed_models = {"gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"}
+    model = gemini_model if gemini_model in allowed_models else "gemini-3.8-flash"
     gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}"
     prompt = f"""あなたはYouTubeユーザーの行動を分析する専門家です。
 「{keyword}」を検索したユーザーが、次に検索しそうなキーワードを30個予測してください。
