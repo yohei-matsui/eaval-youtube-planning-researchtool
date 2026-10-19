@@ -29,6 +29,11 @@ async def root():
     return html_path.read_text(encoding="utf-8")
 
 
+@app.get("/guide", response_class=HTMLResponse)
+async def guide():
+    return (BASE_DIR / "guide.html").read_text(encoding="utf-8")
+
+
 # ---------------------------------------------------------------------------
 # /api/search
 # ---------------------------------------------------------------------------

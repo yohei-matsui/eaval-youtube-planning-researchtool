@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>使い方・活用ガイド | YouTube 検索企画リサーチツール</title>
+  <link rel="icon" type="image/png" href="/static/logo.png" />
+  <style>
+    :root {
+      --pink: #E8002D;
+      --pink-d: #B8001F;
+      --glass-bg: rgba(255,255,255,0.65);
+      --glass-bg-strong: rgba(255,255,255,0.78);
+      --glass-inset: inset 0 1px 1px rgba(255,255,255,0.92), 0 4px 24px rgba(232,0,45,0.04);
+      --glass-blur: blur(28px);
+      --radius-outer: 22px;
+      --radius-inner: 14px;
+      --text: #1A1A1A;
+      --muted: #7A7A7A;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 15% 0%,  rgba(255,210,218,0.50) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 5%,  rgba(255,220,225,0.35) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 90%, rgba(255,200,210,0.25) 0%, transparent 55%),
+        linear-gradient(160deg, #FFF0F2 0%, #FFF5F6 45%, #FFFAFE 100%);
+      line-height: 1.7;
+    }
+    a { color: var(--pink); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    header {
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.8), 0 1px 0 rgba(232,0,45,0.08);
+      padding: 14px 28px; display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo-img { width: 36px; height: 36px; object-fit: contain; border-radius: 9px; flex-shrink: 0; }
+    .header-text { flex: 1; }
+    .header-text h1 { font-size: 1rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+    .header-text span { font-size: .72rem; color: var(--muted); }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 20px; font-size: .8rem; font-weight: 600;
+      background: var(--pink); color: #fff; box-shadow: 0 4px 14px rgba(232,0,45,0.25);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .back-btn:hover { text-decoration: none; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(232,0,45,0.32); }
+
+    main { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-inset); border-radius: var(--radius-outer);
+    }
+    .section { margin-bottom: 22px; padding: 28px 30px; }
+    .hero h2 { font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; margin-bottom: 10px; }
+    .hero p { font-size: .92rem; color: #374151; }
+    .hero p strong { color: var(--text); }
+
+    .label {
+      font-size: .7rem; font-weight: 700; color: var(--pink); letter-spacing: .14em;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    h2.sec-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 18px; letter-spacing: -.01em; }
+    h3 { font-size: .95rem; font-weight: 700; margin: 18px 0 8px; }
+    p, li { font-size: .88rem; color: #374151; }
+    ul { padding-left: 1.2em; }
+    li { margin-bottom: 4px; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .card {
+      background: var(--glass-bg-strong);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-inset); border-radius: var(--radius-inner);
+      padding: 18px 20px;
+    }
+    .card .num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--pink); color: #fff; font-size: .78rem; font-weight: 700; margin-bottom: 10px;
+    }
+    .card h4 { font-size: .95rem; font-weight: 700; margin-bottom: 6px; }
+    .card p { font-size: .84rem; }
+    .card .tag { display: inline-block; margin-top: 10px; font-size: .68rem; color: var(--muted); background: rgba(0,0,0,0.04); padding: 3px 9px; border-radius: 10px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: .86rem; margin: 10px 0 4px; }
+    th, td { padding: 10px 12px; text-align: left; vertical-align: top; }
+    thead th { font-size: .74rem; color: var(--muted); font-weight: 600; background: rgba(0,0,0,0.03); }
+    tbody td { box-shadow: inset 0 -1px 0 rgba(0,0,0,0.05); }
+    tbody tr:last-child td { box-shadow: none; }
+    .table-wrap { overflow-x: auto; }
+
+    .judge { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; font-weight: 800; font-size: 1rem; }
+    .judge.red    { background: rgba(220,38,38,0.12);  color: #B91C1C; }
+    .judge.yellow { background: rgba(234,179,8,0.18);  color: #92400E; }
+    .judge.green  { background: rgba(34,197,94,0.15);  color: #15803D; }
+    .judge.blue   { background: rgba(37,99,235,0.13);  color: #1D4ED8; }
+    .chip { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: .78rem; font-weight: 600; }
+    .v1 { background: rgba(249,115,22,0.22); color: #9A3412; }
+    .v2 { background: rgba(249,115,22,0.16); color: #9A3412; }
+    .v3 { background: rgba(249,115,22,0.11); color: #9A3412; }
+    .v4 { background: rgba(249,115,22,0.07); color: #9A3412; }
+    .v5 { background: rgba(0,0,0,0.04);      color: #6B7280; }
+    .d1 { background: rgba(37,99,235,0.20); color: #1E3A8A; }
+    .d2 { background: rgba(37,99,235,0.14); color: #1E3A8A; }
+    .d3 { background: rgba(37,99,235,0.09); color: #1E3A8A; }
+    .d4 { background: rgba(37,99,235,0.05); color: #1E3A8A; }
+    .d5 { background: rgba(0,0,0,0.04);     color: #6B7280; }
+
+    .flow { display: flex; flex-direction: column; gap: 10px; }
+    .flow-step { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-inner); background: var(--glass-bg-strong); box-shadow: var(--glass-inset); }
+    .flow-step .n { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--pink); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: .8rem; }
+    .flow-step h4 { font-size: .92rem; font-weight: 700; margin-bottom: 3px; }
+    .flow-step p { font-size: .84rem; }
+
+    .note { background: rgba(234,179,8,0.10); border-radius: 10px; padding: 12px 16px; font-size: .82rem; color: #92400E; margin-top: 12px; }
+    .faq dt { font-weight: 700; font-size: .9rem; margin-top: 14px; }
+    .faq dd { font-size: .86rem; color: #374151; margin: 4px 0 0; }
+
+    .cta { text-align: center; padding: 30px; }
+    .cta p { margin-bottom: 14px; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 32px; border-radius: 30px; font-weight: 700; font-size: .95rem;
+      background: var(--pink); color: #fff; box-shadow: 0 6px 20px rgba(232,0,45,0.28);
+    }
+    .btn-primary:hover { text-decoration: none; background: var(--pink-d); }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .section { padding: 22px 18px; }
+      header { padding: 12px 16px; }
+      .back-btn span.t { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="/static/logo.png" alt="EAVAL" class="logo-img" />
+  <div class="header-text">
+    <h1>使い方・活用ガイド</h1>
+    <span>YouTube 検索企画リサーチツール by 株式会社EAVAL</span>
+  </div>
+  <a href="/" class="back-btn">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    <span class="t">ツールに戻る</span>
+  </a>
+</header>
+
+<main>
+
+  <div class="hero glass section">
+    <div class="label">About</div>
+    <h2>検索キーワード1つで、企画の「需要」と「競合」を一度に見るツール</h2>
+    <p>
+      調べたいキーワードを入力するだけで、<strong>そのキーワードがどれくらい検索されているか</strong>と、<strong>いま上位に表示されている動画10本</strong>を同時に取得します。
+      さらに、視聴者が実際に打ち込んでいる<strong>サジェストキーワード</strong>、<strong>関連キーワード</strong>、AIによる<strong>「次に検索されそうなキーワード」</strong>まで一画面で確認できるので、企画の立案からタイトル設計、派生企画の洗い出しまでをこのページで完結できます。
+    </p>
+  </div>
+
+  <div class="glass section">
+    <div class="label">Features</div>
+    <h2 class="sec-title">このツールでできること</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="num">1</div>
+        <h4>月間検索ボリュームと判定</h4>
+        <p>ラッコキーワードAPIからキーワードの月間検索ボリュームを取得し、「×／△／○／◎」の4段階で企画に向くかどうかをひと目で判定します。</p>
+        <span class="tag">ラッコキーワード APIキーが必要</span>
+      </div>
+      <div class="card">
+        <div class="num">2</div>
+        <h4>YouTube検索結果 上位10件</h4>
+        <p>タイトル・チャンネル・再生回数・投稿日を一覧表示。再生回数と投稿日は色の濃さで段階分けされ、タイトルをクリックすると動画へ、チャンネル名をクリックするとチャンネルページへ飛べます。</p>
+        <span class="tag">APIキー不要</span>
+      </div>
+      <div class="card">
+        <div class="num">3</div>
+        <h4>サジェスト・関連キーワード</h4>
+        <p>YouTubeの検索窓に出るサジェストキーワードと、ラッコキーワードの関連キーワード上位10件（SEO難易度・月間検索数つき）を表示。並べ替え、CSV・PDF出力に対応しています。</p>
+        <span class="tag">サジェストはAPIキー不要</span>
+      </div>
+      <div class="card">
+        <div class="num">4</div>
+        <h4>Gemini 行動予測キーワード</h4>
+        <p>「このキーワードを検索した人が次に何を検索するか」をGemini AIが30件予測。視聴者の興味の流れから、派生企画やシリーズ化のネタを探せます。</p>
+        <span class="tag">Gemini APIキーが必要（無料枠あり）</span>
+      </div>
+    </div>
+    <p style="margin-top:16px;font-size:.84rem;">
+      このほか、同じキーワードを<strong>シークレットブラウザで開く</strong>ボタン（ログイン状態や視聴履歴の影響を受けない素の検索結果を確認）、<strong>VidIQで調べる</strong>ボタン（VidIQのキーワードリサーチへ直行）、
+      各キーワードの横にある「入れ替え」アイコン（押すとそのキーワードが入力欄に入り、すぐ再検索できます）があります。
+    </p>
+  </div>
+
+  <div class="glass section">
+    <div class="label">How to read</div>
+    <h2 class="sec-title">画面の見方</h2>
+
+    <h3>月間検索ボリュームの判定</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>判定</th><th>月間検索ボリューム</th><th>意味</th></tr></thead>
+      <tbody>
+        <tr><td><span class="judge blue">◎</span></td><td>5,000 以上</td><td>需要が十分にある。検索から安定して流入が見込めるキーワード</td></tr>
+        <tr><td><span class="judge green">○</span></td><td>3,000 〜 4,999</td><td>企画として成立する。上位動画の競合が弱ければ狙い目</td></tr>
+        <tr><td><span class="judge yellow">△</span></td><td>1,000 〜 2,999</td><td>ニッチ。複合キーワード（2語・3語）で絞り込むか、別の軸と組み合わせる</td></tr>
+        <tr><td><span class="judge red">×</span></td><td>1,000 未満</td><td>検索需要が小さい。検索流入を狙う企画には向かない</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>上位10件の色分け</h3>
+    <p>再生回数はオレンジ、投稿日は青で、それぞれ5段階の濃さで表示します。<strong>濃いほど「強い」</strong>（よく見られている／新しい）です。</p>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>再生回数</th><th>投稿日</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip v1">5万回 以上</span></td><td><span class="chip d1">24時間以内</span></td></tr>
+        <tr><td><span class="chip v2">1万 〜 5万回</span></td><td><span class="chip d2">1週間以内</span></td></tr>
+        <tr><td><span class="chip v3">5,000 〜 1万回</span></td><td><span class="chip d3">1週間 〜 数か月</span></td></tr>
+        <tr><td><span class="chip v4">1,000 〜 5,000回</span></td><td><span class="chip d4">1年前</span></td></tr>
+        <tr><td><span class="chip v5">1,000回 未満</span></td><td><span class="chip d5">2年以上前</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>関連キーワードの SEO難易度</h3>
+    <p>数値が低いほど上位表示しやすいキーワードです。Gemini 行動予測キーワードの表では、おおよそ <strong>39以下を緑</strong>、<strong>40〜69を黄</strong>、<strong>70以上を赤</strong>で表示しています。</p>
+  </div>
+
+  <div class="glass section">
+    <div class="label">Insights</div>
+    <h2 class="sec-title">このツールでわかること</h2>
+    <div class="grid">
+      <div class="card">
+        <h4>そのキーワードに需要があるか</h4>
+        <p>月間検索ボリュームと判定で、「作っても見られない企画」を入口で弾けます。感覚ではなく数字で企画の採否を決められます。</p>
+      </div>
+      <div class="card">
+        <h4>競合がどれくらい強いか</h4>
+        <p>上位10件の再生回数と投稿日を見れば、「古い動画しか上位にいない＝新しい動画で取れる余地がある」「全部10万回超え＝正面からは厳しい」といった判断ができます。</p>
+      </div>
+      <div class="card">
+        <h4>どんな切り口が刺さっているか</h4>
+        <p>上位10本のタイトルを並べて読むと、視聴者が求めている切り口（初心者向け／比較／失敗談 など）と、まだ誰もやっていない切り口が見えてきます。</p>
+      </div>
+      <div class="card">
+        <h4>視聴者が次に何を知りたいか</h4>
+        <p>サジェスト・関連キーワード・Gemini行動予測で、1本の企画から派生する「次の企画」が見つかります。シリーズ化や再生リスト設計に使えます。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass section">
+    <div class="label">Workflow</div>
+    <h2 class="sec-title">活用方法 — 企画を1本決めるまでの流れ</h2>
+    <div class="flow">
+      <div class="flow-step"><span class="n">1</span><div><h4>軸になるキーワードを入れて検索する</h4><p>まずは広めの1語（例：「英語」「家計管理」）で検索し、判定とサジェストから手応えのある方向を掴みます。</p></div></div>
+      <div class="flow-step"><span class="n">2</span><div><h4>サジェスト・関連キーワードで絞り込む</h4><p>「入れ替え」アイコンで2語・3語の複合キーワードに置き換えて再検索。判定が○〜◎で、かつ上位の競合が強すぎないキーワードを探します。</p></div></div>
+      <div class="flow-step"><span class="n">3</span><div><h4>上位10件のタイトルと数字を読む</h4><p>再生回数が多い動画の「切り口」と「言い回し」を書き出します。投稿日が古い動画ばかりなら、最新情報で更新する企画が有効です。</p></div></div>
+      <div class="flow-step"><span class="n">4</span><div><h4>タイトル・構成を設計する</h4><p>上位動画に共通する要素を押さえたうえで、まだ誰もやっていない切り口を1つ足します。シークレットブラウザで素の検索結果も確認しておくと、おすすめ枠や広告の影響を切り分けられます。</p></div></div>
+      <div class="flow-step"><span class="n">5</span><div><h4>Gemini行動予測で「次の1本」を決める</h4><p>「AIで解析」で、同じ視聴者が次に検索しそうなキーワードを出します。1本目の動画の最後で誘導する2本目・3本目の企画をここから選びます。</p></div></div>
+      <div class="flow-step"><span class="n">6</span><div><h4>データを書き出して共有する</h4><p>関連キーワードはCSV・PDFで出力できます。企画会議やクライアントへの提案資料にそのまま添付できます。より深く調べたいときは「VidIQで調べる」から続きを行えます。</p></div></div>
+    </div>
+    <div class="note">
+      ポイント：判定が◎でも、上位10件がすべて大手チャンネルの10万回超えなら正面勝負は避け、サジェストから派生した複合キーワードで入口を変えるのが基本です。逆に判定が△でも、上位が古い動画ばかりなら十分に狙えます。
+    </div>
+  </div>
+
+  <div class="glass section">
+    <div class="label">Setup</div>
+    <h2 class="sec-title">APIキーについて</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>機能</th><th>必要なもの</th><th>料金</th></tr></thead>
+      <tbody>
+        <tr><td>YouTube上位10件・サジェスト・シークレットブラウザ・VidIQボタン</td><td>不要</td><td>無料</td></tr>
+        <tr><td>月間検索ボリューム・判定・関連キーワード</td><td>ラッコキーワード APIキー</td><td>ラッコキーワードの契約プランに準じる</td></tr>
+        <tr><td>Gemini 行動予測キーワード</td><td>Gemini APIキー（<a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a> で無料発行）</td><td>無料枠あり。上限は <a href="https://ai.google.dev/gemini-api/docs/rate-limits?hl=ja" target="_blank" rel="noopener">こちら</a></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <dl class="faq">
+      <dt>APIキーを持っていなくても使えますか？</dt>
+      <dd>使えます。Step 1 で「設定しない」にチェックを入れると、YouTube上位10件とサジェストだけで検索できます。ボリューム判定・関連キーワード・AI解析は表示されません。</dd>
+      <dt>APIキーはどこに保存されますか？</dt>
+      <dd>入力したキーはこのページ内でのみ使われ、サーバーには保存されません。ページを閉じると消えます。</dd>
+      <dt>「AIで解析」でエラー（429）が出ます</dt>
+      <dd>Gemini無料枠の上限に当たっています。数分待つか、使用モデルを別のものに切り替えてください。上限はAPIキー単位ではなくGoogle Cloudプロジェクト単位で、1日の回数は太平洋時間の午前0時にリセットされます。</dd>
+      <dt>最初にアクセスしたとき、黒い画面でしばらく待たされます</dt>
+      <dd>一定時間使われていないとサーバーが休止し、再起動に1分ほどかかります。そのままお待ちいただければ自動で表示されます。</dd>
+    </dl>
+  </div>
+
+  <div class="glass section cta">
+    <p>それでは、調べたいキーワードを入れてみてください。</p>
+    <a href="/" class="btn-primary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      ツールを開く
+    </a>
+  </div>
+
+</main>
+</body>
+</html>
